@@ -13,7 +13,7 @@ final class dependency_manager_test extends TestCase
 print_r($obj->dependencies);
         $this->assertEquals(1, sizeof($obj->dependencies));
 print_r($obj->resources);
-        $this->assertEquals(1, sizeof($obj->resources));
+        $this->assertEquals(4, sizeof($obj->resources));
     }
 
 }
