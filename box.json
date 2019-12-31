@@ -1,0 +1,9 @@
+{
+  "files": [
+    "README.md",
+    "VERSION",
+    "LICENSE",
+    "src/class-xml-file.php"
+  ],
+  "output": "class-xml-file.phar"
+}

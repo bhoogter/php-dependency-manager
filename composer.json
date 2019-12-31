@@ -1,0 +1,32 @@
+{
+  "name": "bhoogter/php-dependency-manager",
+  "description": "PHP Depdendency Manager",
+  "authors": [
+    {
+      "name": "Benjamin Hoogterp",
+      "email": "benjaminhoogterp@gmail.com",
+      "homepage": "http://www.benjaminhoogterp.com",
+      "role": "Author"
+    }
+  ],
+  "keywords": [
+    "xml"
+  ],
+  "homepage": "http://www.github.com/bhoogter/php-dependency-manager",
+  "license": "GPL v3",
+  "autoload": {
+    "classmap": [
+      "src/"
+    ]
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^8"
+  },
+  "scripts": {
+    "phar:install-tools": [
+      "gem install mime-types -v 2.6.2",
+      "curl -LSs https://box-project.github.io/box2/installer.php | php"
+    ],
+    "phar:build": "box build"
+  }
+}

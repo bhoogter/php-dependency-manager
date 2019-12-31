@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+
+<modules>
+    <module>
+        <dependencies>
+            <dependency name="xml-source" group="bhoogter" version="1.0" />
+        </dependencies>
+    </module>
+</modules>
