@@ -65,13 +65,13 @@ print("\n======================\n");
 // print("\n<br/>Reading PHAR: $phar");
         $phar = new Phar($phar, FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::KEY_AS_FILENAME, $name);
 // print("\n<br/>Requiring PHAR: $phar");
-//        require($phar);
+       require($phar);
         $basepath = "phar://" . $phar->getPath();
         foreach (new RecursiveIteratorIterator($phar) as $file) {
             $filename = str_replace($basepath, "", $file->getFilename());
 // print_r("\n$basepath");
 // print_r("\n$filename");
-            $this->resources[$filename] = $phar;
+            $this->resources[$filename] = $name;
         }
     }
 
@@ -126,9 +126,9 @@ print("\n======================\n");
     }
 
     public function include($fname) {
-        foreach($this->resources as $file => $phar) {
+        foreach($this->resources as $file => $pharAlias) {
             if (strpos($file, $fname) !== false) {
-                require_once("phar://$phar/$file");
+                require_once("phar://$pharAlias/$file");
             }
         }
     }
@@ -139,8 +139,6 @@ print("\n======================\n");
 }
 
 if (!function_exists("dependency_manager")) {
-
-
     function dependency_manager() {
         static $o;
         if ($o == null) $o = new dependency_manager();
@@ -148,6 +146,10 @@ if (!function_exists("dependency_manager")) {
     }
 }
 
-spl_autoload_register(function ($name) {
+if (!function_exists("dependency_manager_autoload")) {
+    function dependency_manager_autoload($name) {
+        dependency_manager()->include($name);
+    }
+}
 
-});
+spl_autoload_register('dependency_manager_autoload');
