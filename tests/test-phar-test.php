@@ -2,19 +2,22 @@
 declare(strict_types=1);
 use PHPUnit\Framework\TestCase;
 
-function dependency_manager_workspace() { return __DIR__ . "/resources/work"; }
-function dependency_manager_source() { return __DIR__ . "/resources/dependencies-test-phars.xml";}
 require(__DIR__ . "/../src/class-dependency-manager.php");
 
-final class dependency_manager_test extends TestCase
+final class test_phar_test extends TestCase
 {
 
     public function clearObjects()
     {
-        foreach (glob(__DIR__ . "/resourceswork/*") as $f) {
+        foreach (glob(__DIR__ . "/resources/work/*") as $f) {
             if ($f == __DIR__ . "resources/work/.gitkeep") continue;
             unlink($f);
         }
+    }
+
+    public static function setUpBeforeClass(): void 
+    {
+        dependency_manager("test_phar_test", __DIR__ . "/resources/dependencies-test-phars.xml", __DIR__ . "/resources/work");
     }
 
     public function setUp(): void
@@ -24,8 +27,6 @@ final class dependency_manager_test extends TestCase
 
     public function testLoadDependencyManager(): void
     {
-        dependency_manager(true);
-
         $obj_a = new test_phar_a();
         $obj_aa = new test_phar_aa();
         $this->assertNotNull($obj_a);

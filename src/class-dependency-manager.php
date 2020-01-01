@@ -21,18 +21,20 @@ class dependency_manager
 
         if ($this->sources == null) array($this->default_source());
 
+print "\n<br/>Loading sources..";
         $this->load_sources();
+print "\n<br/>Loaded sources..";
     }
 
     public function default_source() {
-        if (file_exists( $v = ($this->workingDir . "/" . $this->DEPXML))) return $v;
-        if (file_exists( $v = (__DIR__ . "/" . $this->DEPXML))) return $v;
+        if (file_exists( $v = ($this->workingDir . "/" . dependency_manager::DEPXML))) return $v;
+        if (file_exists( $v = (__DIR__ . "/" . dependency_manager::DEPXML))) return $v;
         $d = __DIR__;
         while (strlen($d) >= strlen($_SERVER["DOCUMENT_ROOT"])) {
             $d = dirname($d);
-            if (file_exists( $v = ("$d/" . $this->DEPXML))) return $v;
+            if (file_exists( $v = ("$d/" . dependency_manager::DEPXML))) return $v;
         }
-        return __DIR__ . "/" . $this->DEPXML;
+        return __DIR__ . "/" . dependency_manager::DEPXML;
 
     }
 
@@ -162,26 +164,22 @@ class dependency_manager
     public function require_once($fname) { return $this->include($fname); }
 }
 
-if (!function_exists("dependency_manager_source")) {
-    function dependency_manager_source() { return null; }
-}
-
-if (!function_exists("dependency_manager_workspace")) {
-    function dependency_manager_workspace() { return null; }
-}
-
 if (!function_exists("dependency_manager")) {
-    function dependency_manager($reset = false) {
+    function dependency_manager($scope = "default", $vsources = null, $vworkspace = null, $autoload = null) {
         static $o;
-        if ($o == null || !!$reset) $o = new dependency_manager(dependency_manager_source(), dependency_manager_workspace());
-        return $o;
+        if ($o == null) $o = array();
+
+        if ($autoload != null) {
+            foreach($o as $dp) {
+                $dp->include($autoload);
+            }
+            return;
+        }
+
+        if (@$o[$scope] == null || $vsources != null || $vworkspace != null) 
+            $o[$scope] = new dependency_manager($vsources, $vworkspace);
+        return $o[$scope];
     }
 }
 
-if (!function_exists("dependency_manager_autoload")) {
-    function dependency_manager_autoload($name) {
-        dependency_manager()->include($name);
-    }
-}
-
-spl_autoload_register('dependency_manager_autoload');
+spl_autoload_register(function ($name) { dependency_manager(null, null, null, $name); });
