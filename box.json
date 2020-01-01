@@ -2,8 +2,8 @@
   "files": [
     "README.md",
     "VERSION",
-    "LICENSE",
-    "src/class-xml-file.php"
+    "LICENSE"
   ],
+  "directories" : [ "src" ],
   "output": "class-xml-file.phar"
 }
