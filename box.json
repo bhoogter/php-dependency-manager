@@ -5,5 +5,5 @@
     "LICENSE"
   ],
   "directories" : [ "src" ],
-  "output": "class-xml-file.phar"
+  "output": "php-dependency-manager.phar"
 }
