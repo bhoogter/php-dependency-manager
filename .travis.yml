@@ -18,10 +18,10 @@ before_deploy:
 deploy:
   - provider: releases
     skip_cleanup: true
-    file: php-dependency-management.phar
+    file: php-dependency-manager.phar
     api_key:
       secure: B5pHegjCYgcloI4zjjBG8AroWGL8Dhi66igfmR7uZ+mpzokNbpUfzeD5/oDY1EzLHPcQKdP+P2lefS2q4Imt7BJGsrRWu1buSO9Ga7jnOWuphTkJl08ap0jC9sDDUoSNA/mAUstGqimHhUmCGPfiEtWtVaXQkzJaJr4C5MlKMpD/Kxa3+oZrCDUdrFmmOUtlqKVID9aPYt8DVpvzPUlrQBEwHmd+B7EzrvCJid0cVYtjIdREtYJWnSEVBshM1kAbtM7RtV/NeBW1TXSIqdKpBuqLhvpPc/OtfR/3acAdP/jvXcL3scXD+EFv823zirCXDjWlUugGI8KxHKq7dgTUZm6CcdqJ298zhUB1faxHo9buwknciwYfFSdtlOkqwjiwJEIqmfb4qrwyksXbCHVT8EzGSZtuxDdgteynBWo5oOhVpNbf127lVH+swcFYKm0AgkHr/yfUBdpVvb2L2zNoXHvUmWWch1exWC2l9rurJwPtBNZVD1si4pwABdmMYp2Lx/Mr9NS21WEni3gOwtMQ2YhAZl0ZrqItE5lA0ua7EraND0h7XFwuPliD0m0hPZcQfvXJr3+tCdpPcW81zZniIphwsNFod8J6tCBIQaQDR8dGbfwSaFP/f2nJ97/P2Tj2HECwky936A+LC2DhkLHbKpAaTdbXWL3Q+n63Ky4BXWI=
     on:
-      repo: bhoogter/php-dependency-management
+      repo: bhoogter/php-dependency-manager
       tags: true
 
