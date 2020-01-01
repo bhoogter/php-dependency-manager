@@ -16,14 +16,15 @@ class dependency_manager
             if (is_string($fnames)) $this->sources = array($fnames);
             else if (is_array($fnames)) $this->sources = $fnames;
         }
+        if ($this->sources == null) array($this->default_source());
+
         if ($wdir != null) $this->workingDir = $wdir;
         if (substr($this->workingDir, -1) != "/") $this->workingDir .= "/";
 
-        if ($this->sources == null) array($this->default_source());
 
-print "\n<br/>Loading sources..";
+// print "\n<br/>Loading sources..";
         $this->load_sources();
-print "\n<br/>Loaded sources..";
+// print "\n<br/>Loaded sources..";
     }
 
     public function default_source() {
@@ -32,6 +33,7 @@ print "\n<br/>Loaded sources..";
         $d = __DIR__;
         while (strlen($d) >= strlen($_SERVER["DOCUMENT_ROOT"])) {
             $d = dirname($d);
+            print ("\nd=$d");
             if (file_exists( $v = ("$d/" . dependency_manager::DEPXML))) return $v;
         }
         return __DIR__ . "/" . dependency_manager::DEPXML;
@@ -176,7 +178,7 @@ if (!function_exists("dependency_manager")) {
             return;
         }
 
-        if (@$o[$scope] == null || $vsources != null || $vworkspace != null) 
+        if (!array_key_exists($scope, $o) || $vsources != null || $vworkspace != null) 
             $o[$scope] = new dependency_manager($vsources, $vworkspace);
         return $o[$scope];
     }

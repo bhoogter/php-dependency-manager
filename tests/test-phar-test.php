@@ -22,7 +22,7 @@ final class test_phar_test extends TestCase
 
     public function setUp(): void
     {
-        $this->clearObjects();
+        // $this->clearObjects();
     }
 
     public function testLoadDependencyManager(): void
