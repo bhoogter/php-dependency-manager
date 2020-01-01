@@ -1,13 +1,10 @@
 <?php
-
 declare(strict_types=1);
-
 use PHPUnit\Framework\TestCase;
 
 function dependency_manager_workspace() { return __DIR__ . "/resources/work"; }
 function dependency_manager_source() { return __DIR__ . "/resources/dependencies-test-phars.xml";}
 require(__DIR__ . "/../src/class-dependency-manager.php");
-
 
 final class dependency_manager_test extends TestCase
 {

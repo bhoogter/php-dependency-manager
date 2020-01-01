@@ -3,9 +3,11 @@
 class dependency_manager
 {
     public $workingDir = __DIR__;
-    public $sources = array(__DIR__ . "dependencies.xml");
+    public $sources;
     public $dependencies = array();
     public $resources = array();
+
+    const DEPXML = "dependencies.xml";
 
     public function __construct($fnames = null, $wdir = null)
     {
@@ -17,8 +19,21 @@ class dependency_manager
         if ($wdir != null) $this->workingDir = $wdir;
         if (substr($this->workingDir, -1) != "/") $this->workingDir .= "/";
 
+        if ($this->sources == null) array($this->default_source());
+
         $this->load_sources();
-        $this->ensure_dependencies();
+    }
+
+    public function default_source() {
+        if (file_exists( $v = ($this->workingDir . "/" . $this->DEPXML))) return $v;
+        if (file_exists( $v = (__DIR__ . "/" . $this->DEPXML))) return $v;
+        $d = __DIR__;
+        while (strlen($d) >= strlen($_SERVER["DOCUMENT_ROOT"])) {
+            $d = dirname($d);
+            if (file_exists( $v = ("$d/" . $this->DEPXML))) return $v;
+        }
+        return __DIR__ . "/" . $this->DEPXML;
+
     }
 
     public function load_sources() {
@@ -27,6 +42,7 @@ class dependency_manager
         foreach($this->sources as $source) {
             $this->dependencies[] = new xml_file($source);
         }
+        $this->ensure_dependencies();
     }
 
     public function ensure_dependencies()
