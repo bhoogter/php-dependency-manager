@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+
+<modules>
+    <module>
+        <dependencies>
+            <dependency name="test-phar-1" group="bhoogter" version="1.0.0" />
+            <dependency name="test-phar-2" group="bhoogter" version="1.0.0" />
+        </dependencies>
+    </module>
+</modules>

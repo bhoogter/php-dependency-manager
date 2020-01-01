@@ -62,15 +62,15 @@ class dependency_manager
 
     public function scan_phar_files($phar_file, $name)
     {
-print("\n<br/>Reading PHAR: $phar_file");
+// print("\n<br/>Reading PHAR: $phar_file");
         $phar = new Phar($phar_file, FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::KEY_AS_FILENAME, $name);
 // print("\n<br/>Requiring PHAR: $phar_file");
         // require($phar_file);
-        $basepath = "phar://" . $phar->getPath();
+        $basepath = "phar://" . $phar->getPath() . "/";
         foreach (new RecursiveIteratorIterator($phar) as $file) {
             $filename = str_replace($basepath, "", $file->getPath() . '/' . $file->getFilename());
 // print_r("\n$basepath");
- print_r("\n$filename");
+//  print_r("\nfilename=$filename");
             $this->resources[$filename] = $name;
         }
     }
@@ -125,11 +125,17 @@ print("\n<br/>Reading PHAR: $phar_file");
         return file_exists($local_file);
     }
 
-    public function include($fname) {
-        foreach($this->resources as $file => $pharAlias) {
-            if (strpos($file, $fname) !== false) {
+    public function include($fname)
+    {
+        // print("\n<br/>Searching for: [$fname]");
+        foreach ($this->resources as $file => $pharAlias) {
+            $found = false;
+            if (strpos($file, $fname) !== false) $found = true;
+            if (strpos($file, $k = str_replace("_", "-", $fname)) !== false) $found = true;
+
+            if ($found) {
                 $src = "phar://$pharAlias/$file";
-                print("\n<br/>file=$file, src=$src");
+// print("\n<br/>file=$file, src=$src");
                 require_once($src);
             }
         }
