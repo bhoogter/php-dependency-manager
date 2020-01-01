@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 
+function dependency_manager_workspace() { return __DIR__ . "/resources/work"; }
+function dependency_manager_source() { return __DIR__ . "/resources/dependencies-live.xml";}
 require(__DIR__ . "/../src/class-dependency-manager.php");
+
 
 final class dependency_manager_test extends TestCase
 {
@@ -24,9 +27,9 @@ final class dependency_manager_test extends TestCase
 
     public function testLoadDependencyManager(): void
     {
-        $obj = new dependency_manager(__DIR__ . "/resources/dependencies.xml", __DIR__ . "/resources/work");
-        $this->assertNotNull($obj);
-        $this->assertEquals(1, sizeof($obj->dependencies));
-        $this->assertEquals(4, sizeof($obj->resources));
+        dependency_manager(true);
+
+        $obj = new xml_file();
+        $obj2 = new aggregator();
     }
 }

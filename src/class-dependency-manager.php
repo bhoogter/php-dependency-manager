@@ -45,7 +45,7 @@ class dependency_manager
                 if ($dUrls == null) $dUrls = "https://github.com/$dGrps/$dName/releases/download/$dVers/$dName.phar";
 // print("\n<br />nam=$dName, grp=$dGrps, ver=$dVers, typ=$dType, url=$dUrls");
 
-                $resourceFile = $this->local_file_name($dName, $dVers, $dType);
+                $resourceFile = $this->local_file_name($dGrps, $dName, $dVers, $dType);
                 if (!file_exists($resourceFile))
                     $this->fetch_dependency($dUrls, $resourceFile);
 
@@ -55,22 +55,22 @@ class dependency_manager
                 }
             }
         }
-print("\n======================\n");
-print_r($this->resources);
-print("\n======================\n");
+// print("\n======================\n");
+// print_r($this->resources);
+// print("\n======================\n");
     }
 
-    public function scan_phar_files($phar, $name)
+    public function scan_phar_files($phar_file, $name)
     {
-// print("\n<br/>Reading PHAR: $phar");
-        $phar = new Phar($phar, FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::KEY_AS_FILENAME, $name);
-// print("\n<br/>Requiring PHAR: $phar");
-       require($phar);
+print("\n<br/>Reading PHAR: $phar_file");
+        $phar = new Phar($phar_file, FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::KEY_AS_FILENAME, $name);
+// print("\n<br/>Requiring PHAR: $phar_file");
+        // require($phar_file);
         $basepath = "phar://" . $phar->getPath();
         foreach (new RecursiveIteratorIterator($phar) as $file) {
-            $filename = str_replace($basepath, "", $file->getFilename());
+            $filename = str_replace($basepath, "", $file->getPath() . '/' . $file->getFilename());
 // print_r("\n$basepath");
-// print_r("\n$filename");
+ print_r("\n$filename");
             $this->resources[$filename] = $name;
         }
     }
@@ -88,8 +88,8 @@ print("\n======================\n");
         return $text;
     }
 
-    public function local_file_name($name, $version, $type) {
-        $result = $this->slugify($name) . '-' . $this->slugify($version) . "." . $type;
+    public function local_file_name($group, $name, $version, $type) {
+        $result = $this->slugify($group) . "-" . $this->slugify($name) . '-' . $this->slugify($version) . "." . $type;
         while (strpos($result, "--") !== false) $result = str_replace("--", "-", $result);
 
         $result = $this->workingDir . $result;
@@ -128,7 +128,9 @@ print("\n======================\n");
     public function include($fname) {
         foreach($this->resources as $file => $pharAlias) {
             if (strpos($file, $fname) !== false) {
-                require_once("phar://$pharAlias/$file");
+                $src = "phar://$pharAlias/$file";
+                print("\n<br/>file=$file, src=$src");
+                require_once($src);
             }
         }
     }
@@ -138,10 +140,18 @@ print("\n======================\n");
     public function require_once($fname) { return $this->include($fname); }
 }
 
+if (!function_exists("dependency_manager_source")) {
+    function dependency_manager_source() { return null; }
+}
+
+if (!function_exists("dependency_manager_workspace")) {
+    function dependency_manager_workspace() { return null; }
+}
+
 if (!function_exists("dependency_manager")) {
-    function dependency_manager() {
+    function dependency_manager($reset = false) {
         static $o;
-        if ($o == null) $o = new dependency_manager();
+        if ($o == null || !!$reset) $o = new dependency_manager(dependency_manager_source(), dependency_manager_workspace());
         return $o;
     }
 }
