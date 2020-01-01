@@ -2,7 +2,7 @@
 declare(strict_types=1);
 use PHPUnit\Framework\TestCase;
 
-require(__DIR__ . "/../src/class-dependency-manager.php");
+require_once(__DIR__ . "/../src/class-dependency-manager.php");
 
 final class test_phar_test extends TestCase
 {
