@@ -5,6 +5,6 @@
     "LICENSE"
   ],
   "directories" : [ "src" ],
-  "stub": "src/autoload.php",
+  "stub": "src/stub.php",
   "output": "php-dependency-manager.phar"
 }

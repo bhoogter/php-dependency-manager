@@ -49,7 +49,7 @@ class dependency_manager
     {
 // print "\n<br/>Loading Internal..";
         $internal_resources = array(
-            "github://bhoogter:xml-file/phar:0.2.56",
+            "github://bhoogter:xml-file/phar:0.2.57",
         );
 
         foreach ($internal_resources as $resource) 
@@ -75,17 +75,21 @@ class dependency_manager
     public function load_sources()
     {
         $this->dependencies = array();
-        foreach ($this->sources as $source) 
+print "\n<br/>load_sources()";
+        foreach ($this->sources as $source)
+        {
+print "\n<br/>load_sources(), loading source=$source";
             $this->dependencies[] = new xml_file($source);
-        $this->ensure_dependencies();
+        }
+print "\n<br/>load_sources(), ensuring dependencies...";
+            $this->ensure_dependencies();
     }
 
     public function ensure_dependencies()
     {
         foreach ($this->dependencies as $dependency) {
             $deps = $dependency->lst("//*/dependency/@name");
-// print ("\n<br/>DEPS=");
-// print_r($deps);
+// print ("\n<br/>DEPS="); print_r($deps);
             foreach ($deps as $dName) {
                 $dGrps = $dependency->get("//*/dependency[@name='$dName']/@group");
                 $dVers = $dependency->get("//*/dependency[@name='$dName']/@version");
@@ -200,7 +204,7 @@ class dependency_manager
 // print("\n<br/>Reading PHAR: $phar_file");
         $phar = new Phar($phar_file, FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::KEY_AS_FILENAME, $name);
 // print("\n<br/>Requiring PHAR: $phar_file");
-// require($phar_file);
+        include_once($phar_file);
         $basepath = "phar://" . $phar->getPath() . "/";
         foreach (new RecursiveIteratorIterator($phar) as $file) {
             $filename = str_replace($basepath, "", $file->getPath() . '/' . $file->getFilename());
