@@ -4,7 +4,7 @@ use PHPUnit\Framework\TestCase;
 
 require_once(__DIR__ . "/../src/class-dependency-manager.php");
 
-final class test_phar_test extends TestCase
+final class dm_multi_scope extends TestCase
 {
 
     public static function setUpBeforeClass(): void 
