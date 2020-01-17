@@ -33,8 +33,8 @@ class dependency_manager
 
     protected function ensure_config() 
     {
-print "\n<br/>Ensuring Config..";
-print "\n<br/>workingDir=$this->workingDir";
+// print "\n<br/>Ensuring Config..";
+// print "\n<br/>workingDir=$this->workingDir";
         if (!file_exists($this->workingDir)) 
             @mkdir($this->workingDir, 0777);
         if (!file_exists($this->workingDir)) throw new Exception("Cannot secure working folder: $this->workingDir");
