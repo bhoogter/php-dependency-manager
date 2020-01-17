@@ -3,6 +3,6 @@
 a simplistic but self-contained dependency manager.  Does not require 
 installation, only configuration.
 
-#License
+# License
 
 GPLv3
