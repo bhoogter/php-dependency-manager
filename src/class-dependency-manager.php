@@ -2,7 +2,7 @@
 
 class dependency_manager
 {
-    public $workingDir = __DIR__ + "/phars/";
+    public $workingDir = __DIR__ . "/phars/";
     public $sources;
     public $dependencies = array();
     public $resources = array();
