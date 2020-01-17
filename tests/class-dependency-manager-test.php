@@ -32,4 +32,11 @@ final class dependency_manager_test extends TestCase
         $this->assertEquals(1, sizeof($obj->dependencies));
         $this->assertEquals(4, sizeof($obj->resources));
     }
+
+    public function testDefaultSource()
+    {
+        $result = dependency_manager() -> default_source();
+
+        $this->assertTrue(strpos($result, "dependencies.xml") !== false);
+    }
 }

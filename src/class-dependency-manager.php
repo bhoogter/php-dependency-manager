@@ -25,15 +25,20 @@ class dependency_manager
 // print "\n<br/>Loading sources..";
         $this->load_sources();
 // print "\n<br/>Loaded sources..";
-    }
+        $this->include_autoloads();
+// print "\n<br/>Loaded autoloads..";
+}
 
     public function default_source() {
         if (file_exists( $v = ($this->workingDir . "/" . dependency_manager::DEPXML))) return $v;
         if (file_exists( $v = (__DIR__ . "/" . dependency_manager::DEPXML))) return $v;
-        $d = __DIR__;
+        $d = realpath(__DIR__);
         while (strlen($d) >= strlen($_SERVER["DOCUMENT_ROOT"])) {
-            $d = dirname($d);
-            print ("\nd=$d");
+            if ($d == ".") break;
+            $dd = dirname($d);
+            if ($dd == $d) break;
+            $d = $dd;
+//print ("\nd=$d");
             if (file_exists( $v = ("$d/" . dependency_manager::DEPXML))) return $v;
         }
         return __DIR__ . "/" . dependency_manager::DEPXML;
@@ -43,9 +48,10 @@ class dependency_manager
     public function load_sources() {
         require_once("phar://" . __DIR__ . "/xml-file.phar/src/class-xml-file.php");
         $this->dependencies = array();
-        foreach($this->sources as $source) {
-            $this->dependencies[] = new xml_file($source);
-        }
+        if (is_array($this->sources))
+            foreach($this->sources as $source) {
+                $this->dependencies[] = new xml_file($source);
+            }
         $this->ensure_dependencies();
     }
 
@@ -164,6 +170,8 @@ class dependency_manager
     public function include_once($fname) { return $this->include($fname); }
     public function require($fname) { return $this->include($fname); }
     public function require_once($fname) { return $this->include($fname); }
+
+    public function include_autoloads() { $this->include("autoload.php"); }
 }
 
 if (!function_exists("dependency_manager")) {
