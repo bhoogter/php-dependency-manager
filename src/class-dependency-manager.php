@@ -49,7 +49,7 @@ class dependency_manager
     {
 // print "\n<br/>Loading Internal..";
         $internal_resources = array(
-            "github://bhoogter:xml-file/phar:0.2.55",
+            "github://bhoogter:xml-file/phar:0.2.56",
         );
 
         foreach ($internal_resources as $resource) 
