@@ -8,6 +8,7 @@ require_once(__DIR__ . "/../src/class-dependency-manager.php");
 
 final class dependency_manager_test extends TestCase
 {
+    const SCOPE = "dependency_manager_test";
 
     public static function clearObjects()
     {
@@ -25,18 +26,18 @@ final class dependency_manager_test extends TestCase
     {
         $this->assertEquals(1, 1);
     }
+
     public function testLoadDependencyManager(): void
     {
         $obj = dependency_manager("dependency_manager_test");
         $this->assertNotNull($obj);
         $this->assertEquals(1, sizeof($obj->dependencies));
-        $this->assertEquals(4, sizeof($obj->resources));
+        $this->assertEquals(5, sizeof($obj->resources));
     }
 
     public function testDefaultSource()
     {
-        $result = dependency_manager() -> default_source();
-
+        $result = dependency_manager(dependency_manager_test::SCOPE) -> default_source();
         $this->assertTrue(strpos($result, "dependencies.xml") !== false);
     }
 }
