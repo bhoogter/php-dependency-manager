@@ -49,7 +49,7 @@ class dependency_manager
     {
 // print "\n<br/>Loading Internal..";
         $internal_resources = array(
-            "github://bhoogter:xml-file/phar:0.2.57",
+            "github://bhoogter:xml-file/phar:0.2.59",
         );
 
         foreach ($internal_resources as $resource) 
@@ -75,13 +75,13 @@ class dependency_manager
     public function load_sources()
     {
         $this->dependencies = array();
-print "\n<br/>load_sources()";
+// print "\n<br/>load_sources()";
         foreach ($this->sources as $source)
         {
-print "\n<br/>load_sources(), loading source=$source";
+// print "\n<br/>load_sources(), loading source=$source";
             $this->dependencies[] = new xml_file($source);
         }
-print "\n<br/>load_sources(), ensuring dependencies...";
+// print "\n<br/>load_sources(), ensuring dependencies...";
             $this->ensure_dependencies();
     }
 
