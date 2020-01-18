@@ -12,6 +12,7 @@ class dependency_manager
 
     public function __construct($fnames = null, $wdir = null)
     {
+// print "\n<br/>dependency_manager::__construct: "; print_r($fnames); print_r($wdir);
         if ($fnames != null) {
             if (is_string($fnames)) $this->sources = array($fnames);
             else if (is_array($fnames)) $this->sources = $fnames;
@@ -152,12 +153,14 @@ class dependency_manager
 
     public function local_file_name($group, $name, $version, $type)
     {
+// print "\n<br/>local_file_name(), workingDir = $this->workingDir";
         $result = $this->slugify($group) . "-" . $this->slugify($name) . '-' . $this->slugify($version) . "." . $type;
         while (strpos($result, "--") !== false) $result = str_replace("--", "-", $result);
 
         $result = $this->workingDir . $result;
         $result = str_replace('/', '\\', $result);
 
+// print "\n<br/>local_file_name(): $result";
         return $result;
     }
 
@@ -201,7 +204,7 @@ class dependency_manager
 
     public function scan_phar_files($phar_file, $name)
     {
-// print("\n<br/>Reading PHAR: $phar_file");
+//  print("\n<br/>Reading PHAR: $phar_file\n");
         $phar = new Phar($phar_file, FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::KEY_AS_FILENAME, $name);
 // print("\n<br/>Requiring PHAR: $phar_file");
         include_once($phar_file);
@@ -247,6 +250,7 @@ class dependency_manager
 if (!function_exists("dependency_manager")) {
     function dependency_manager($scope = "default", $vsources = null, $vworkspace = null, $autoload = null)
     {
+// print "\n<br/>dependency_manager($scope): "; print "\nvsources="; print_r($vsources); print("\nworkspace="); print_r($vworkspace);
         static $o;
         if ($o == null) $o = array();
 

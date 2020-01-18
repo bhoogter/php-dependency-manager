@@ -19,7 +19,7 @@ final class dependency_manager_test extends TestCase
     }
     public static function setUpBeforeClass(): void
     {
-        dependency_manager("dependency_manager_test", __DIR__ . "/resources/dependencies.xml", __DIR__ . "/resources/work");
+        dependency_manager(dependency_manager_test::SCOPE, __DIR__ . "/resources/dependencies.xml", __DIR__ . "/resources/work");
     }
 
     public function testSetupCorrect(): void
@@ -29,7 +29,7 @@ final class dependency_manager_test extends TestCase
 
     public function testLoadDependencyManager(): void
     {
-        $obj = dependency_manager("dependency_manager_test");
+        $obj = dependency_manager(dependency_manager_test::SCOPE);
         $this->assertNotNull($obj);
         $this->assertEquals(1, sizeof($obj->dependencies));
         $this->assertEquals(5, sizeof($obj->resources));
