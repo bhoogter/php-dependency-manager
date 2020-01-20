@@ -3,6 +3,7 @@
 class dependency_manager_versioning
 {
     public static $testResponse = null;
+    public static $gitAuth = null;
 
     public static function gitVersionList($owner, $repo)
     {
@@ -14,10 +15,9 @@ class dependency_manager_versioning
 
         if (function_exists("curl_init")) {
             $ch = curl_init();
-            // print("\nurl=$url");
             curl_setopt($ch, CURLOPT_URL, $releaseUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            // curl_setopt($ch, CURLOPT_HEADER, 1);
+            if (self::$gitAuth != null) curl_setopt($ch, CURLOPT_USERPWD, self::$gitAuth);  
             curl_setopt($ch, CURLOPT_USERAGENT, "bhoogter");
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);

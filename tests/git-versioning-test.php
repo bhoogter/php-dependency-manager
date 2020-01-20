@@ -10,6 +10,8 @@ final class git_versioning_test extends TestCase
     {
         dependency_manager_versioning::$testResponse =
             file_get_contents(__DIR__ . "/resources/xml-file-releases.json");
+	dependency_manager_versioning::$gitAuth = 
+	    @file_get_contents(__DIR__ . "resources/.gitauth");
     }
 
     public function testGitVersioning_versionList(): void
