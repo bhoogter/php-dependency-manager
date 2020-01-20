@@ -6,7 +6,7 @@ branches:
 
 php:
   - '7.2'
-script: phpunit --bootstrap src/stub.php --test-suffix '-test.php,Test.php,.phpt' tests
+script: phpunit --bootstrap src/stub.php --test-suffix '-test.php,Test.php,.phpt' --do-not-cache-result tests
 notifications:
   email: false
 
