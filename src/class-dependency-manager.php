@@ -136,6 +136,8 @@ class dependency_manager
 
     public function get_git($grp, $nam, $ver, $typ = 'phar', $url = '')
     {
+        if ($this->dynmaicVersioning()) 
+            $ver = $this->resolveGitVersion($grp, $name, $ver, $url);
         $resourceFile = $this->local_file_name($grp, $nam, $ver, $typ);
         if ($url == null) $url = "https://github.com/$grp/$nam/releases/download/$ver/$nam.$typ";
         if (!file_exists($resourceFile)) $this->fetch_dependency($url, $resourceFile);
@@ -249,6 +251,103 @@ class dependency_manager
     public function require_once($fname)    {   return $this->include($fname);     }
 
     public function include_autoloads()     {   $this->include("autoload.php");    }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public $gitTestResponse = null;
+    public $gitAuth = null;
+
+    private function dynmaicVersioning() {
+        return $this->gitAuth != null;
+    }
+
+    public function gitVersionList($owner, $repo)
+    {
+
+        $releaseUrl = "https://api.github.com/repos/$owner/$repo/releases";
+
+        if ($this->gitTestResponse)
+            return $this->gitTestResponse;
+
+        if (function_exists("curl_init")) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $releaseUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            if (self::$gitAuth != null) curl_setopt($ch, CURLOPT_USERPWD, self::$gitAuth);  
+            curl_setopt($ch, CURLOPT_USERAGENT, "bhoogter");
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            $result = curl_exec($ch);
+            $err = curl_error($ch);
+            curl_close($ch);
+        } else return null;
+
+        return $result;
+    }
+
+    public function gitVersions($owner, $repo)
+    {
+        $versionList = $this->gitVersionList($owner, $repo);
+        $versionsListObj = new xml_file();
+        $versionsListObj->loadJson($versionList);
+        $versions = $versionsListObj->lst("//tag_name");
+        usort($versions, 'version_compare');
+
+        return $versions;
+    }
+
+    public function resolveGitVersion($owner, $repo, $match, &$url)
+    {
+        $versionList = $this->gitVersionList($owner, $repo);
+        $versionsListObj = new xml_file();
+        $versionsListObj->loadJson($versionList);
+
+        $versions = $versionsListObj->lst("//tag_name");
+        usort($versions, 'version_compare');
+        $versions = array_reverse($versions);
+
+// print "\nmatch=$match";
+        $c = substr($match, 0, 1);
+        if ($c == '<' || $c == '>' || $c == '=') {
+// print "\nMatching...";
+            $op = "";
+            while($c == '<' || $c == '>' || $c == '=') {
+                $op .= substr($match, 0, 1);
+                $match = substr($match, 1);
+                $c = substr($match, 0, 1);
+            }
+// print "\nMATCHER: op=$op, match=$match";
+
+            $versions = array_filter($versions, function($v) use($match, $op) {
+                return version_compare($v, $match, $op);
+            });
+        }
+
+        if (strpos($match, '+') !== false) {
+            $match = str_replace($match, '+', '0');
+            if ($match == '') $match = "0.0.0";
+            $versions = array_filter($versions, function($v) use($match) {
+                return version_compare($v, $match, ">=");
+            });
+        }
+
+        $versions = array_values($versions); // reset indexes
+
+// print_r($versions);
+        if (sizeof($versions) <= 0) return null;
+
+        $matched = $versions[0];
+// print "\n-------------\n";
+// print xml_file::make_tidy_string($versionsListObj->saveXML());
+// print "\n-------------\n";
+// print_r($versionsListObj->get("//item[tag='$matched']"));
+        $url = $versionsListObj->get("//item[tag_name='$matched']/assets/item/browser_download_url");
+        return $versions[0];
+    }
+
+
 }
 
 if (!function_exists("dependency_manager")) {
