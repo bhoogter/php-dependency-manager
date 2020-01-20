@@ -2,6 +2,8 @@
 
 class dependency_manager
 {
+    private const xml_file_version = '0.2.61';
+
     public $workingDir = __DIR__ . "/phars/";
     public $sources;
     public $dependencies = array();
@@ -42,15 +44,16 @@ class dependency_manager
 
         if ($this->sources == null) array($this->default_source());
 
-        foreach($this->sources as $source)
-            if (!file_exists($source)) throw new Exception("Cannot locate source: $source");
+        if (is_array($this->sources))
+            foreach($this->sources as $source)
+                if (!file_exists($source)) throw new Exception("Cannot locate source: $source");
     }
 
     protected function load_internal_resources()
     {
 // print "\n<br/>Loading Internal..";
         $internal_resources = array(
-            "github://bhoogter:xml-file/phar:0.2.59",
+            "github://bhoogter:xml-file/phar:" . self::xml_file_version,
         );
 
         foreach ($internal_resources as $resource) 
@@ -77,11 +80,12 @@ class dependency_manager
     {
         $this->dependencies = array();
 // print "\n<br/>load_sources()";
-        foreach ($this->sources as $source)
-        {
+        if (is_array($this->sources))
+            foreach ($this->sources as $source)
+            {
 // print "\n<br/>load_sources(), loading source=$source";
-            $this->dependencies[] = new xml_file($source);
-        }
+                $this->dependencies[] = new xml_file($source);
+            }
 // print "\n<br/>load_sources(), ensuring dependencies...";
             $this->ensure_dependencies();
     }
