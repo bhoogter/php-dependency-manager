@@ -36,9 +36,9 @@ final class git_versioning_test extends TestCase
         $expected = "0.2.61";
         $expectedUrl = "https://github.com/bhoogter/xml-file/releases/download/0.2.61/xml-file.phar";
 
-        print "\nresult=$result";
+// print "\nresult=$result";
         $this->assertEquals($expected, $result);
-        print "\nurl=$url\n";
+// print "\nurl=$url\n";
         $this->assertEquals($expectedUrl, $url);
     }
 
@@ -51,9 +51,9 @@ final class git_versioning_test extends TestCase
         $expected = "0.2.61";
         $expectedUrl = "https://github.com/bhoogter/xml-file/releases/download/0.2.61/xml-file.phar";
 
-        print "\nresult=$result";
+// print "\nresult=$result";
         $this->assertEquals($expected, $result);
-        print "\nurl=$url\n";
+// print "\nurl=$url\n";
         $this->assertEquals($expectedUrl, $url);
     }
 }
