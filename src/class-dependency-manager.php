@@ -136,8 +136,7 @@ class dependency_manager
 
     public function get_git($grp, $nam, $ver, $typ = 'phar', $url = '')
     {
-        if ($this->dynmaicVersioning()) 
-            $ver = $this->resolveGitVersion($grp, $name, $ver, $url);
+        if ($this->dynmaicVersioning()) $ver = $this->resolveGitVersion($grp, $nam, $ver, $url);
         $resourceFile = $this->local_file_name($grp, $nam, $ver, $typ);
         if ($url == null) $url = "https://github.com/$grp/$nam/releases/download/$ver/$nam.$typ";
         if (!file_exists($resourceFile)) $this->fetch_dependency($url, $resourceFile);
@@ -275,7 +274,7 @@ class dependency_manager
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $releaseUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            if (self::$gitAuth != null) curl_setopt($ch, CURLOPT_USERPWD, self::$gitAuth);  
+            if ($this->gitAuth != null) curl_setopt($ch, CURLOPT_USERPWD, $this->gitAuth);  
             curl_setopt($ch, CURLOPT_USERAGENT, "bhoogter");
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
