@@ -24,7 +24,7 @@ class dependency_manager
 //  print    "\n<br/>Initializing..";
         $this->ensure_config();
         $this->load_internal_resources();
-        $this->include_autoloads();
+        $this->include_autoloads();  // for the internal resources, if needed.  Others will follow.
 //  print "\n<br/>Loading sources..";
         $this->load_sources();
 //  print "\n<br/>Loaded sources..";
@@ -49,7 +49,7 @@ class dependency_manager
 
     protected function internal_resource_list() {
         $d = (strpos(__FILE__, ".phar") === false ? __DIR__ : "phar://" . __FILE__ . "/src");
-        $f = $d . "/" . $this::DEPXML;
+        $f = $d . "/" . self::DEPXML;
 // print "\n<br/>source::internal_resource_list - f=$f";
         $src = file_get_contents($f);
         $src = str_replace('<?xml version="1.0" ?>', "", $src);
@@ -76,7 +76,6 @@ class dependency_manager
             $internal_resources[] = $ref;
         }
 
-
 // print_r($internal_resources);die();
         return $internal_resources;
     }
@@ -90,7 +89,7 @@ class dependency_manager
     public function default_source()
     {
         if (file_exists($v = ($this->workingDir . "/" . dependency_manager::DEPXML))) return $v;
-        if (file_exists($v = (__DIR__ . "/" . dependency_manager::DEPXML))) return $v;
+        if (file_exists($v = (__DIR__ . "/" . self::DEPXML))) return $v;
         $d = realpath(__DIR__);
         while (strlen($d) >= strlen($_SERVER["DOCUMENT_ROOT"])) {
             if ($d == ".") break;
@@ -98,23 +97,28 @@ class dependency_manager
             if ($dd == $d) break;
             $d = $dd;
 //print ("\nd=$d");
-            if (file_exists($v = ("$d/" . dependency_manager::DEPXML))) return $v;
+            if (file_exists($v = ("$d/" . self::DEPXML))) return $v;
         }
-        return __DIR__ . "/" . dependency_manager::DEPXML;
+        return __DIR__ . "/" . self::DEPXML;
     }
 
     public function load_sources()
     {
+        $sources_loaded = array();
         $this->dependencies = array();
-// print "\n<br/>load_sources()";
-        if (is_array($this->sources))
-            foreach ($this->sources as $source)
-            {
-// print "\n<br/>load_sources(), loading source=$source";
-                $this->dependencies[] = new xml_file($source);
+        // print "\n<br/>load_sources()";
+        if (is_array($this->sources)) {
+            $this->sources = array_unique($this->sources);
+            while (count($to_load = array_diff($this->sources, $sources_loaded)) > 0) {
+                foreach ($to_load as $source) {
+                    // print "\n<br/>load_sources(), loading source=$source";
+                    $sources_loaded[] = $source;
+                    $this->dependencies[] = new xml_file($source);
+                }
             }
-// print "\n<br/>load_sources(), ensuring dependencies...";
-            $this->ensure_dependencies();
+        }
+        // print "\n<br/>load_sources(), ensuring dependencies...";
+        $this->ensure_dependencies();
     }
 
     public function ensure_dependencies()
@@ -218,7 +222,7 @@ class dependency_manager
 // print("\n$result");
 // print("\n================");
             if ($result === false || $result == "") {
-                throw new Excpetion("Error requiring dependency: $url - $err");
+                throw new Exception("Error requiring dependency: $url - $err");
                 // print("<br/>ERROR REQURING DEPENDENCY: $url - $err");
                 // die();
             }
@@ -233,12 +237,12 @@ class dependency_manager
         switch($type)
         {
             case "phar":
-                $this->scan_phar_files($resourceFile, $name);
+                $this->scan_phar_file($resourceFile, $name);
                 break;
         }
     }
 
-    public function scan_phar_files($phar_file, $name)
+    public function scan_phar_file($phar_file, $name)
     {
 //  print("\n<br/>Reading PHAR: $phar_file\n");
         $phar = new Phar($phar_file, FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::KEY_AS_FILENAME, $name);
@@ -247,9 +251,14 @@ class dependency_manager
         $basepath = "phar://" . $phar->getPath() . "/";
         foreach (new RecursiveIteratorIterator($phar) as $file) {
             $filename = str_replace($basepath, "", $file->getPath() . '/' . $file->getFilename());
-            // print_r("\n$basepath");
-            //  print_r("\nfilename=$filename");
+// print("\n$basepath");
+// print("\nfilename=$filename");
             $this->resources[$filename] = $name;
+
+            if ($filename == self::DEPXML) {
+// print "\n<br/>Found module dependencies: " . $file->getPath() . '/' . $file->getFilename();
+                $this->sources[] = $file->getPath() . '/' . $file->getFilename();
+            }
         }
     }
 
