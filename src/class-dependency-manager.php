@@ -2,8 +2,6 @@
 
 class dependency_manager
 {
-    private const xml_file_version = '0.2.61';
-
     public $workingDir = __DIR__ . "/phars/";
     public $sources;
     public $dependencies = array();
@@ -49,14 +47,43 @@ class dependency_manager
                 if (!file_exists($source)) throw new Exception("Cannot locate source: $source");
     }
 
+    protected function internal_resource_list() {
+        $d = (strpos(__FILE__, ".phar") === false ? __DIR__ : "phar://" . __FILE__ . "/src");
+        $f = $d . "/" . $this::DEPXML;
+// print "\n<br/>source::internal_resource_list - f=$f";
+        $src = file_get_contents($f);
+        $src = str_replace('<?xml version="1.0" ?>', "", $src);
+// print $src;
+
+        preg_match_all('/name="([^"]*)"/', $src, $names);
+        $names = $names[0];
+        
+        preg_match_all('/group="([^"]*)"/', $src, $groups);
+        $groups = $groups[0];
+
+        preg_match_all('/version="([^"]*)"/', $src, $versions);
+        $versions = $versions[0];
+
+        $internal_resources = array();
+        for($i = 0; $i < count($names); $i++) {
+            $ref = "github://";
+            $ref .= str_replace(array('"', 'group='), '', $groups[$i]);
+            $ref .= ':';
+            $ref .= str_replace(array('"', 'name='), '', $names[$i]);
+            $ref .= '/phar:';
+            $ref .= str_replace(array('"', 'version='), '', $versions[$i]);
+
+            $internal_resources[] = $ref;
+        }
+
+
+// print_r($internal_resources);die();
+        return $internal_resources;
+    }
+
     protected function load_internal_resources()
     {
-// print "\n<br/>Loading Internal..";
-        $internal_resources = array(
-            "github://bhoogter:xml-file/phar:" . self::xml_file_version,
-        );
-
-        foreach ($internal_resources as $resource) 
+        foreach ($this->internal_resource_list() as $resource) 
             $this->load_resource_string($resource);
     }
 
@@ -113,32 +140,36 @@ class dependency_manager
 
     public function load_resource_string($str)
     {
-        $nam = '';
-        $typ = '';
+// print "\n<br/>load_resource_string: $str";
+        $opts = [];
         $resourceFile = "";
         if ("github://" == substr($str, 0, 9))
             {
                 $gitstr = substr($str, 9);
                 $parts = explode(":", $gitstr);
-                $grp = sizeof($parts) > 0 ? $parts[0] : "";
-                $nam = sizeof($parts) > 1 ? $parts[1] : "";
-                $ver = sizeof($parts) > 2 ? $parts[2] : "";
-                $namParts = explode('/', $nam);
-                $typ = sizeof($namParts) > 1 ? $namParts[1] : 'phar';
-                $nam = sizeof($namParts) > 1 ? $namParts[0] : '';
-// print "\n<br/>LOAD RESOURCE STRING PARTS: nam=$nam, grp=$grp, typ=$typ, ver=$ver";
+                $opts['group'] = sizeof($parts) > 0 ? $parts[0] : "";
+                $opts['name'] = sizeof($parts) > 1 ? $parts[1] : "";
+                $opts['version'] = sizeof($parts) > 2 ? $parts[2] : "";
 
-                $resourceFile = $this->get_git($grp, $nam, $ver, $typ);
+                $namParts = explode('/', $opts['name']);
+                $opts['type'] = sizeof($namParts) > 1 ? $namParts[1] : 'phar';
+                $opts['name'] = sizeof($namParts) > 0 ? $namParts[0] : '';
+
+// print "\n<br/>LOAD RESOURCE STRING PARTS: nam=${opts[name]}, grp=${opts[group]}, typ=${opts[type]}, ver=${opts[version]}";
+
+                $resourceFile = $this->get_git($opts['group'], $opts['name'], $opts['version'], $opts['type']);
             }
-        $this->process_dependency($resourceFile, $typ, $nam);
+        $this->process_dependency($resourceFile, $opts['type'], $opts['name']);
         return $resourceFile;
     }
 
     public function get_git($grp, $nam, $ver, $typ = 'phar', $url = '')
     {
+// print "\n<br/>source::get_git($grp, $nam, $ver, $typ, $url)";
         if ($this->dynmaicVersioning()) $ver = $this->resolveGitVersion($grp, $nam, $ver, $url);
         $resourceFile = $this->local_file_name($grp, $nam, $ver, $typ);
         if ($url == null) $url = "https://github.com/$grp/$nam/releases/download/$ver/$nam.$typ";
+// print "\n<br/>source::get_git: url=$url";
         if (!file_exists($resourceFile)) $this->fetch_dependency($url, $resourceFile);
         return $resourceFile;
     }
