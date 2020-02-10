@@ -173,7 +173,7 @@ class dependency_manager
         if ($this->dynmaicVersioning()) $ver = $this->resolveGitVersion($grp, $nam, $ver, $url);
         $resourceFile = $this->local_file_name($grp, $nam, $ver, $typ);
         if ($url == null) $url = "https://github.com/$grp/$nam/releases/download/$ver/$nam.$typ";
-// print "\n<br/>source::get_git: url=$url";
+//  print "\n<br/>source::get_git: url=$url, resourceFile=$resourceFile";
         if (!file_exists($resourceFile)) $this->fetch_dependency($url, $resourceFile);
         return $resourceFile;
     }
@@ -206,9 +206,9 @@ class dependency_manager
 
     public function fetch_dependency($url, $local_file)
     {
+// print("\nphp-dependency-manager::fetch_dependency(url=$url, local_file=$local_file)");
         if (function_exists("curl_init")) {
             $ch = curl_init();
-// print("\nurl=$url");
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 // curl_setopt($ch, CURLOPT_HEADER, 1);
