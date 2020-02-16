@@ -2,18 +2,8 @@
 declare(strict_types=1);
 use PHPUnit\Framework\TestCase;
 
-require_once(__DIR__ . "/../src/class-dependency-manager.php");
-
 final class test_phar_test extends TestCase
 {
-
-    public function clearObjects()
-    {
-        foreach (glob(__DIR__ . "/resources/work/*") as $f) {
-            if ($f == __DIR__ . "resources/work/.gitkeep") continue;
-            unlink($f);
-        }
-    }
 
     public static function setUpBeforeClass(): void 
     {
@@ -39,7 +29,11 @@ final class test_phar_test extends TestCase
 
         $obj_c = new test_phar_c();
         $obj_cc = new test_phar_cc();
+        $obj_ccc = new test_phar_ccc();
+        $obj_cccc = new test_phar_cccc();
         $this->assertNotNull($obj_c);
         $this->assertNotNull($obj_cc);
+        $this->assertNotNull($obj_ccc);
+        $this->assertNotNull($obj_cccc);
     }
 }

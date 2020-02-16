@@ -12,7 +12,7 @@ class dependency_manager
 
     public function __construct($fnames = null, $wdir = null)
     {
-// print "\n<br/>dependency_manager::__construct: "; print_r($fnames); print_r($wdir);
+//  print "\n<br/>dependency_manager::__construct: "; print_r($fnames); print_r($wdir);
         if ($fnames != null) {
             if (is_string($fnames)) $this->sources = array($fnames);
             else if (is_array($fnames)) $this->sources = $fnames;
@@ -21,11 +21,11 @@ class dependency_manager
         if ($wdir != null) $this->workingDir = $wdir;
         if (substr($this->workingDir, -1) != "/") $this->workingDir .= "/";
 
-//  print    "\n<br/>Initializing..";
+//   print    "\n<br/>Initializing..";
         $this->ensure_config();
         $this->load_internal_resources();
         $this->include_autoloads();  // for the internal resources, if needed.  Others will follow.
-//  print "\n<br/>Loading sources..";
+//   print "\n<br/>Loading sources..";
         $this->load_sources();
 //  print "\n<br/>Loaded sources..";
         $this->include_autoloads();
@@ -106,18 +106,21 @@ class dependency_manager
     {
         $sources_loaded = array();
         $this->dependencies = array();
-        // print "\n<br/>load_sources()";
-        if (is_array($this->sources)) {
-            $this->sources = array_unique($this->sources);
-            while (count($to_load = array_diff($this->sources, $sources_loaded)) > 0) {
-                foreach ($to_load as $source) {
-                    // print "\n<br/>load_sources(), loading source=$source";
-                    $sources_loaded[] = $source;
-                    $this->dependencies[] = new xml_file($source);
-                }
+// print "\n<br/>load_sources()"; 
+        if (!is_array($this->sources)) throw new Exception("Sources is not an array.");
+        $this->sources = array_unique($this->sources);
+        while (count($to_load = array_diff($this->sources, $sources_loaded)) > 0) {
+            print_r($to_load);
+            foreach ($to_load as $source) {
+// print "\n<br/>load_sources(), loading source=$source";
+                $sources_loaded[] = $source;
+                $this->dependencies[] = new xml_file($source);
             }
+// print "\n====> ";
+// print_r(array_diff($this->sources, $sources_loaded));
+            $this->ensure_dependencies();
         }
-        // print "\n<br/>load_sources(), ensuring dependencies...";
+// print "\n<br/>load_sources(), ensuring dependencies...";
         $this->ensure_dependencies();
     }
 
@@ -252,11 +255,10 @@ class dependency_manager
         foreach (new RecursiveIteratorIterator($phar) as $file) {
             $filename = str_replace($basepath, "", $file->getPath() . '/' . $file->getFilename());
 // print("\n$basepath");
-// print("\nfilename=$filename");
+ print("\nfilename=$filename");
             $this->resources[$filename] = $name;
-
-            if ($filename == self::DEPXML) {
-// print "\n<br/>Found module dependencies: " . $file->getPath() . '/' . $file->getFilename();
+            if (substr_compare($filename, self::DEPXML, -strlen(self::DEPXML)) === 0) {
+ print "\n<br/>Found module dependencies: " . $file->getPath() . '/' . $file->getFilename();
                 $this->sources[] = $file->getPath() . '/' . $file->getFilename();
             }
         }
@@ -264,17 +266,17 @@ class dependency_manager
 
     public function include($fname)
     {
-//  print("\n<br/>Searching for: [$fname]");
+// print("\n<br/>Searching for: [$fname]");
         foreach ($this->resources as $file => $pharAlias) {
 // print("\n<br/>Searching for: [$fname] in [$pharAlias]: $file");
             $found = false;
             if (strpos($file, $fname) !== false) $found = true;
             if (strpos($file, $k = str_replace("_", "-", $fname)) !== false) $found = true;
 
+// print("\n<br/>Searching for: [$fname] in [$pharAlias]: (${found?'found':'not found'}) $file");
             if ($found) {
-
                 $src = "phar://$pharAlias/$file";
-// print("\n<br/>file=$file, src=$src");
+print("\n<br/>Searching for: [$fname] in [$pharAlias]: **FOUND** $file");
                 if (in_array($src, $this->included)) {
 // print("\n<br/>file=$file, src=$src SKIPPED");
                     continue;
@@ -283,6 +285,7 @@ class dependency_manager
                 $this->included[] = $src;
             }
         }
+print("\n<br/>Searching for: [$fname], NOT FOUND");
     }
 
     public function include_once($fname)    {   return $this->include($fname);     }

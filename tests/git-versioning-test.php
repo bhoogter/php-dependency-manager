@@ -1,7 +1,5 @@
 <?php
-
 declare(strict_types=1);
-
 use PHPUnit\Framework\TestCase;
 
 final class git_versioning_test extends TestCase
