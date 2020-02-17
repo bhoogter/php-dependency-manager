@@ -89,7 +89,7 @@ class dependency_manager
         while (count($to_load = array_diff($this->sources, $sources_loaded)) > 0) {
 // print_r($to_load);
             foreach ($to_load as $source) {
-//  print "\n<br/>load_sources(), loading source=$source";
+// print "\n<br/>load_sources(), loading source=$source";
                 $sources_loaded[] = $source;
                 $this->dependencies[] = new xml_file($source);
             }
@@ -253,14 +253,15 @@ class dependency_manager
             if (strpos($file, $fname) !== false) $found = true;
             if (strpos($file, $k = str_replace("_", "-", $fname)) !== false) $found = true;
 
-// print("\n<br/>Searching for: [$fname] in [$pharAlias]: (${found?'found':'not found'}) $file");
+// print("\n<br/>Searching for: [$fname] in [$pharAlias]: (" . ($found?'found':'not found') . ") $file");
             if ($found) {
                 $src = "phar://$pharAlias/$file";
-//  print("\n<br/>Searching for: [$fname] in [$pharAlias]: **FOUND** $file");
+// print("\n<br/>Searching for: [$fname] in [$pharAlias]: **FOUND** $file");
                 if (in_array($src, $this->included)) {
 // print("\n<br/>file=$file, src=$src SKIPPED");
                     continue;
                 }
+// print("\n<br/>Requiring: $src");
                 require_once($src);
                 $this->included[] = $src;
             }
