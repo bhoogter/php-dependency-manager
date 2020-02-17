@@ -17,20 +17,20 @@ final class git_versioning_test extends TestCase
         $dm->gitAuth = $test_auth;
     }
 
-    public function xtestGitVersioning_versionList(): void
+    public function testGitVersioning_versionList(): void
     {
         $result = dependency_manager()->gitVersionList("bhoogter", "xml-file");
 // print $result;
         $this->assertTrue(strlen($result) > 1000);
     }
 
-    public function xtestGitVersioning_versions(): void
+    public function testGitVersioning_versions(): void
     {
         $result = dependency_manager()->gitVersions("bhoogter", "xml-file");
         $this->assertEquals(13, sizeof($result));
     }
 
-    public function xtestGitVersioning_resolveGitVersion(): void
+    public function testGitVersioning_resolveGitVersion(): void
     {
         $url = "";
         $result = dependency_manager()->resolveGitVersion("bhoogter", "xml-file", ">0.2.0", $url);
@@ -38,7 +38,7 @@ final class git_versioning_test extends TestCase
         $this->assertEquals(self::XMLFILEURL, $url);
     }
 
-    public function xtestGitVersioning_resolveGitVersion2(): void
+    public function testGitVersioning_resolveGitVersion2(): void
     {
         $url = "";
         $result = dependency_manager()->resolveGitVersion("bhoogter", "xml-file", "0.2.+", $url);
