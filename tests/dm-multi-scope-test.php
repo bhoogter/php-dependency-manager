@@ -7,7 +7,6 @@ final class dm_multi_scope extends TestCase
 
     public static function setUpBeforeClass(): void 
     {
-print "\n<br/>setup test";
         dependency_manager(null, __DIR__ . "/resources/dependencies.xml", __DIR__ . "/resources/work");
         dependency_manager("alt-scope", __DIR__ . "/resources/dependencies-test-phars.xml", __DIR__ . "/resources/work");
     }

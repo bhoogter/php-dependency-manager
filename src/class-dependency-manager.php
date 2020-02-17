@@ -113,7 +113,7 @@ class dependency_manager
         while (count($to_load = array_diff($this->sources, $sources_loaded)) > 0) {
 // print_r($to_load);
             foreach ($to_load as $source) {
-// print "\n<br/>load_sources(), loading source=$source";
+//  print "\n<br/>load_sources(), loading source=$source";
                 $sources_loaded[] = $source;
                 $this->dependencies[] = new xml_file($source);
             }
