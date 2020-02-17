@@ -255,8 +255,7 @@ class dependency_manager
         $basepath = "phar://" . $phar->getPath() . "/";
         foreach (new RecursiveIteratorIterator($phar) as $file) {
             $filename = str_replace($basepath, "", $file->getPath() . '/' . $file->getFilename());
-// print("\n$basepath");
-//  print("\nfilename=$filename");
+  print("\nscan_phar_file: basepath=$basepath, filename=$filename");
             $this->resources[$filename] = $name;
             if (substr_compare($filename, self::DEPXML, -strlen(self::DEPXML)) === 0) {
 //  print "\n<br/>Found module dependencies: " . $file->getPath() . '/' . $file->getFilename();
