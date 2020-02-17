@@ -253,6 +253,7 @@ class dependency_manager
 // print("\n<br/>Requiring PHAR: $phar_file");
         include_once($phar_file);
         $basepath = "phar://" . $phar->getPath() . "/";
+print("\nBASEPATH=$basepath");
         foreach (new RecursiveIteratorIterator($phar) as $file) {
             $filename = str_replace($basepath, "", $file->getPath() . '/' . $file->getFilename());
   print("\nscan_phar_file: basepath=$basepath, filename=$filename");
