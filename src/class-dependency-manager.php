@@ -258,7 +258,7 @@ class dependency_manager
   print("\nscan_phar_file: basepath=$basepath, filename=$filename");
             $this->resources[$filename] = $name;
             if (substr_compare($filename, self::DEPXML, -strlen(self::DEPXML)) === 0) {
-//  print "\n<br/>Found module dependencies: " . $file->getPath() . '/' . $file->getFilename();
+  print "\n<br/>Found module dependencies: " . $file->getPath() . '/' . $file->getFilename();
                 $this->sources[] = $file->getPath() . '/' . $file->getFilename();
             }
         }
