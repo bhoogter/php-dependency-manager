@@ -12,7 +12,7 @@ class dependency_manager
 
     public function __construct($fnames = null, $wdir = null)
     {
-//  print "\n<br/>dependency_manager::__construct: "; print_r($fnames); print_r($wdir);
+// print "\n<br/>dependency_manager::__construct: "; print_r($fnames); print_r($wdir);
         if ($fnames != null) {
             if (is_string($fnames)) $this->sources = array($fnames);
             else if (is_array($fnames)) $this->sources = $fnames;
@@ -32,6 +32,14 @@ class dependency_manager
 //  print "\n<br/>Loaded autoloads..";
     }
 
+    public function internal_resource_list() {
+        // Should be maintained here, in this form, as well as dependencies.xml for propagation
+        // Cannot use xml_file here, since it is the dependency we are pulling in....  Hence, internal.
+        return array(
+            "github://bhoogter:xml-file/phar:0.2.64"
+    );
+    }
+
     protected function ensure_config() 
     {
 // print "\n<br/>Ensuring Config..";
@@ -47,41 +55,9 @@ class dependency_manager
                 if (!file_exists($source)) throw new Exception("Cannot locate source: $source");
     }
 
-    protected function internal_resource_list() {
-        $d = (strpos(__FILE__, ".phar") === false ? __DIR__ : "phar://" . __FILE__ . "/src");
-        $f = $d . "/" . self::DEPXML;
-// print "\n<br/>source::internal_resource_list - f=$f";
-        $src = file_get_contents($f);
-        $src = str_replace('<?xml version="1.0" ?>', "", $src);
-// print $src;
-
-        preg_match_all('/name="([^"]*)"/', $src, $names);
-        $names = $names[0];
-        
-        preg_match_all('/group="([^"]*)"/', $src, $groups);
-        $groups = $groups[0];
-
-        preg_match_all('/version="([^"]*)"/', $src, $versions);
-        $versions = $versions[0];
-
-        $internal_resources = array();
-        for($i = 0; $i < count($names); $i++) {
-            $ref = "github://";
-            $ref .= str_replace(array('"', 'group='), '', $groups[$i]);
-            $ref .= ':';
-            $ref .= str_replace(array('"', 'name='), '', $names[$i]);
-            $ref .= '/phar:';
-            $ref .= str_replace(array('"', 'version='), '', $versions[$i]);
-
-            $internal_resources[] = $ref;
-        }
-
-// print_r($internal_resources);die();
-        return $internal_resources;
-    }
-
     protected function load_internal_resources()
     {
+// print "\n<br/>php-dependency-manager::load_internal_resources, list="; print_r($this->internal_resource_list());
         foreach ($this->internal_resource_list() as $resource) 
             $this->load_resource_string($resource);
     }
@@ -270,6 +246,7 @@ class dependency_manager
     public function include($fname)
     {
 // print("\n<br/>Searching for: [$fname]");
+// print_r($this->resources);
         foreach ($this->resources as $file => $pharAlias) {
 // print("\n<br/>Searching for: [$fname] in [$pharAlias]: $file");
             $found = false;
@@ -279,7 +256,7 @@ class dependency_manager
 // print("\n<br/>Searching for: [$fname] in [$pharAlias]: (${found?'found':'not found'}) $file");
             if ($found) {
                 $src = "phar://$pharAlias/$file";
-// print("\n<br/>Searching for: [$fname] in [$pharAlias]: **FOUND** $file");
+//  print("\n<br/>Searching for: [$fname] in [$pharAlias]: **FOUND** $file");
                 if (in_array($src, $this->included)) {
 // print("\n<br/>file=$file, src=$src SKIPPED");
                     continue;
@@ -288,7 +265,7 @@ class dependency_manager
                 $this->included[] = $src;
             }
         }
-// print("\n<br/>Searching for: [$fname], NOT FOUND");
+//  print("\n<br/>Searching for: [$fname], NOT FOUND");
     }
 
     public function include_once($fname)    {   return $this->include($fname);     }
