@@ -107,10 +107,11 @@ class dependency_manager
         $sources_loaded = array();
         $this->dependencies = array();
 // print "\n<br/>load_sources()"; 
+        if (is_null($this->sources)) $this->sources = array();
         if (!is_array($this->sources)) throw new Exception("Sources is not an array.");
         $this->sources = array_unique($this->sources);
         while (count($to_load = array_diff($this->sources, $sources_loaded)) > 0) {
-            print_r($to_load);
+// print_r($to_load);
             foreach ($to_load as $source) {
 // print "\n<br/>load_sources(), loading source=$source";
                 $sources_loaded[] = $source;
@@ -397,6 +398,7 @@ if (!function_exists("dependency_manager")) {
     {
 // print "\n<br/>dependency_manager($scope): "; print "\nvsources="; print_r($vsources); print("\nworkspace="); print_r($vworkspace);
         static $o;
+        if (!is_string($scope)) $scope = "default";
         if ($o == null) $o = array();
 
         if ($autoload != null) {

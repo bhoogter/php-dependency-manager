@@ -4,6 +4,9 @@ use PHPUnit\Framework\TestCase;
 
 final class git_versioning_test extends TestCase
 {
+    private const XMLFILEVER = "0.2.64";
+    private const XMLFILEURL = "https://github.com/bhoogter/xml-file/releases/download/0.2.64/xml-file.phar";
+
     public static function setUpBeforeClass(): void
     {
         $test_data = file_get_contents(__DIR__ . "/resources/xml-file-releases.json");
@@ -24,22 +27,22 @@ final class git_versioning_test extends TestCase
     public function testGitVersioning_versions(): void
     {
         $result = dependency_manager()->gitVersions("bhoogter", "xml-file");
-        $this->assertEquals(10, sizeof($result));
+        $this->assertEquals(13, sizeof($result));
     }
 
     public function testGitVersioning_resolveGitVersion(): void
     {
         $url = "";
         $result = dependency_manager()->resolveGitVersion("bhoogter", "xml-file", ">0.2.0", $url);
-        $this->assertEquals("0.2.61", $result);
-        $this->assertEquals("https://github.com/bhoogter/xml-file/releases/download/0.2.61/xml-file.phar", $url);
+        $this->assertEquals(self::XMLFILEVER, $result);
+        $this->assertEquals(self::XMLFILEURL, $url);
     }
 
     public function testGitVersioning_resolveGitVersion2(): void
     {
         $url = "";
         $result = dependency_manager()->resolveGitVersion("bhoogter", "xml-file", "0.2.+", $url);
-        $this->assertEquals("0.2.61", $result);
-        $this->assertEquals("https://github.com/bhoogter/xml-file/releases/download/0.2.61/xml-file.phar", $url);
+        $this->assertEquals(self::XMLFILEVER, $result);
+        $this->assertEquals(self::XMLFILEURL, $url);
     }
 }

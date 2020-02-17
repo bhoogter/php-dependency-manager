@@ -4,7 +4,6 @@ use PHPUnit\Framework\TestCase;
 
 final class test_phar_test extends TestCase
 {
-
     public static function setUpBeforeClass(): void 
     {
         dependency_manager("test_phar_test", __DIR__ . "/resources/dependencies-test-phars.xml", __DIR__ . "/resources/work");
