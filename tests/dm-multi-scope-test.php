@@ -17,7 +17,7 @@ final class dm_multi_scope extends TestCase
         $dm2 = dependency_manager("alt-scope");
 
         $this->assertEquals(1, sizeof($dm1->dependencies));
-print_r($dm2->dependencies);
+// print_r($dm2->dependencies);
         $this->assertEquals(3, sizeof($dm2->dependencies));
     }
 }

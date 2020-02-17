@@ -113,7 +113,7 @@ class dependency_manager
         while (count($to_load = array_diff($this->sources, $sources_loaded)) > 0) {
 // print_r($to_load);
             foreach ($to_load as $source) {
- print "\n<br/>load_sources(), loading source=$source";
+//  print "\n<br/>load_sources(), loading source=$source";
                 $sources_loaded[] = $source;
                 $this->dependencies[] = new xml_file($source);
             }
@@ -248,20 +248,21 @@ class dependency_manager
 
     public function scan_phar_file($phar_file, $name)
     {
- print("\n<br/>Reading PHAR: $phar_file\n");
+//  print("\n<br/>Reading PHAR: $phar_file\n");
         $phar = new Phar($phar_file, FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::KEY_AS_FILENAME, $name);
 // print("\n<br/>Requiring PHAR: $phar_file");
         include_once($phar_file);
         $basepath = "phar://" . $phar->getPath() . "/";
-print("\nBASEPATH=$basepath");
+// print("\nBASEPATH=$basepath");
         foreach (new RecursiveIteratorIterator($phar) as $file) {
-print("\nFILEPATH=". $file->getPath());
+// print("\nFILEPATH=". $file->getPath());
             $filename = str_replace($basepath, "", $file->getPath() . '/' . $file->getFilename());
-print("\nscan_phar_file: basepath=$basepath, filename=$filename");
+// print("\nscan_phar_file: basepath=$basepath, filename=$filename");
             $this->resources[$filename] = $name;
             if (substr_compare($filename, self::DEPXML, -strlen(self::DEPXML)) === 0) {
-print "\n<br/>Found module dependencies: " . $file->getPath() . '/' . $file->getFilename();
-                $this->sources[] = $file->getPath() . '/' . $file->getFilename();
+                $add = "phar://$name/$filename";  // Load via PHAR alias (path in travis is unreliable)
+// print "\n<br/>Found module dependencies: " . $file->getPath() . '/' . $file->getFilename() . ", adding: $add";
+                $this->sources[] = $add;
             }
         }
     }
