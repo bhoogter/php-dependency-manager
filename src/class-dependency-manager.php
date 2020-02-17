@@ -255,10 +255,10 @@ class dependency_manager
         foreach (new RecursiveIteratorIterator($phar) as $file) {
             $filename = str_replace($basepath, "", $file->getPath() . '/' . $file->getFilename());
 // print("\n$basepath");
- print("\nfilename=$filename");
+//  print("\nfilename=$filename");
             $this->resources[$filename] = $name;
             if (substr_compare($filename, self::DEPXML, -strlen(self::DEPXML)) === 0) {
- print "\n<br/>Found module dependencies: " . $file->getPath() . '/' . $file->getFilename();
+//  print "\n<br/>Found module dependencies: " . $file->getPath() . '/' . $file->getFilename();
                 $this->sources[] = $file->getPath() . '/' . $file->getFilename();
             }
         }
@@ -276,7 +276,7 @@ class dependency_manager
 // print("\n<br/>Searching for: [$fname] in [$pharAlias]: (${found?'found':'not found'}) $file");
             if ($found) {
                 $src = "phar://$pharAlias/$file";
-print("\n<br/>Searching for: [$fname] in [$pharAlias]: **FOUND** $file");
+// print("\n<br/>Searching for: [$fname] in [$pharAlias]: **FOUND** $file");
                 if (in_array($src, $this->included)) {
 // print("\n<br/>file=$file, src=$src SKIPPED");
                     continue;
@@ -285,7 +285,7 @@ print("\n<br/>Searching for: [$fname] in [$pharAlias]: **FOUND** $file");
                 $this->included[] = $src;
             }
         }
-print("\n<br/>Searching for: [$fname], NOT FOUND");
+// print("\n<br/>Searching for: [$fname], NOT FOUND");
     }
 
     public function include_once($fname)    {   return $this->include($fname);     }
