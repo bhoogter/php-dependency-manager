@@ -1,3 +1,5 @@
 .idea/
 phars/
 .gitauth
+
+php-dependency-manager.phar
