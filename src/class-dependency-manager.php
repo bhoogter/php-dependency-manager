@@ -255,11 +255,12 @@ class dependency_manager
         $basepath = "phar://" . $phar->getPath() . "/";
 print("\nBASEPATH=$basepath");
         foreach (new RecursiveIteratorIterator($phar) as $file) {
+print("\nFILEPATH=". $file->getPath());
             $filename = str_replace($basepath, "", $file->getPath() . '/' . $file->getFilename());
-  print("\nscan_phar_file: basepath=$basepath, filename=$filename");
+print("\nscan_phar_file: basepath=$basepath, filename=$filename");
             $this->resources[$filename] = $name;
             if (substr_compare($filename, self::DEPXML, -strlen(self::DEPXML)) === 0) {
-  print "\n<br/>Found module dependencies: " . $file->getPath() . '/' . $file->getFilename();
+print "\n<br/>Found module dependencies: " . $file->getPath() . '/' . $file->getFilename();
                 $this->sources[] = $file->getPath() . '/' . $file->getFilename();
             }
         }
