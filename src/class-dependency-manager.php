@@ -248,7 +248,7 @@ class dependency_manager
 
     public function scan_phar_file($phar_file, $name)
     {
-//  print("\n<br/>Reading PHAR: $phar_file\n");
+ print("\n<br/>Reading PHAR: $phar_file\n");
         $phar = new Phar($phar_file, FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::KEY_AS_FILENAME, $name);
 // print("\n<br/>Requiring PHAR: $phar_file");
         include_once($phar_file);
