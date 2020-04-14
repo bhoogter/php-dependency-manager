@@ -8,10 +8,12 @@ class dependency_manager
     public $resources = array();
     private $included = array();
 
-    const DEPXML = "dependencies.xml";
-
-    static function trace(...$msgs) {        if (class_exists("php_logger")) php_logger::trace($msgs); } // else print_r($msgs);   }
-    static function debug(...$msgs) {        if (class_exists("php_logger")) php_logger::debug($msgs); } // else print_r($msgs);   }
+    
+    public const DEPXML = "dependencies.xml";
+    
+    public static $log_dump = false;
+    static function trace(...$msgs) { if (class_exists("php_logger")) php_logger::trace(...$msgs); else if (self::$log_dump) print_r($msgs); }
+    static function debug(...$msgs) { if (class_exists("php_logger")) php_logger::debug(...$msgs); else if (self::$log_dump) print_r($msgs); }
 
     public function __construct($fnames = null, $wdir = null)
     {
@@ -24,7 +26,7 @@ class dependency_manager
         if ($wdir != null) $this->workingDir = $wdir;
         if (substr($this->workingDir, -1) != "/") $this->workingDir .= "/";
 
-        // php_logger::trace("Initializing..");
+        self::debug("Initializing..");
         $this->ensure_config();
         $this->load_internal_resources();
         $this->include_autoloads();  // for the internal resources, if needed.  Others will follow.
@@ -67,7 +69,7 @@ class dependency_manager
 
     public function default_source()
     {
-        if (file_exists($v = ($this->workingDir . "/" . dependency_manager::DEPXML))) return $v;
+        if (file_exists($v = ($this->workingDir . "/" . self::DEPXML))) return $v;
         if (file_exists($v = (__DIR__ . "/" . self::DEPXML))) return $v;
         $d = realpath(__DIR__);
         while (strlen($d) >= strlen($_SERVER["DOCUMENT_ROOT"])) {
