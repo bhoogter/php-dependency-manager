@@ -2,7 +2,7 @@
 declare(strict_types=1);
 use PHPUnit\Framework\TestCase;
 
-final class dependency_manager_test extends TestCase
+final class logger_test extends TestCase
 {
     const SCOPE = "dependency_manager_test";
 
