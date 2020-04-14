@@ -12,8 +12,9 @@ class dependency_manager
     public const DEPXML = "dependencies.xml";
     
     public static $log_dump = false;
-    static function trace(...$msgs) { if (class_exists("php_logger")) php_logger::trace(...$msgs); else if (self::$log_dump) print_r($msgs); }
-    static function debug(...$msgs) { if (class_exists("php_logger")) php_logger::debug(...$msgs); else if (self::$log_dump) print_r($msgs); }
+    private static function dump_log(...$msgs) { if (!self::$log_dump) return; foreach($msgs as $m) if (is_string($m)) print($m); else print_r($m);}
+    static function trace(...$msgs) { if (class_exists("php_logger")) php_logger::trace(...$msgs); else self::dump_log(...$msgs); }
+    static function debug(...$msgs) { if (class_exists("php_logger")) php_logger::debug(...$msgs); else self::dump_log(...$msgs); }
 
     public function __construct($fnames = null, $wdir = null)
     {
@@ -53,7 +54,11 @@ class dependency_manager
             @mkdir($this->workingDir, 0777);
         if (!file_exists($this->workingDir)) throw new Exception("Cannot secure working folder: $this->workingDir");
 
-        if ($this->sources == null) array($this->default_source());
+        self::trace("Sources: ", gettype($this->sources));
+        if ($this->sources == null) $this->sources = 
+        array($this->default_source());
+        self::trace("Sources: ", gettype($this->sources));
+        self::trace("Sources: ", $this->sources);
 
         if (is_array($this->sources))
             foreach($this->sources as $source)
@@ -69,10 +74,27 @@ class dependency_manager
 
     public function default_source()
     {
-        if (file_exists($v = ($this->workingDir . "/" . self::DEPXML))) return $v;
-        if (file_exists($v = (__DIR__ . "/" . self::DEPXML))) return $v;
+        $phar = strpos(__FILE__, ".phar") !== false;
+        self::debug("dependency_manager::default_source, phar=$phar");
+
+        if (!$phar) {
+            if (file_exists($v = (__DIR__ . "/" . self::DEPXML))) return $v;
+            if (file_exists($v = ($this->workingDir . "/" . self::DEPXML))) return $v;
+        }
+
+        $d = $this->workingDir;;
+        while (strlen($d) >= strlen($_SERVER["DOCUMENT_ROOT"])) {
+            self::trace("default_source, d=$d");
+            if ($d == ".") break;
+            $dd = dirname($d);
+            if ($dd == $d) break;
+            $d = $dd;
+            if (file_exists($v = ("$d/" . self::DEPXML))) return $v;
+        }
+
         $d = realpath(__DIR__);
         while (strlen($d) >= strlen($_SERVER["DOCUMENT_ROOT"])) {
+            self::trace("default_source, d=$d");
             if ($d == ".") break;
             $dd = dirname($d);
             if ($dd == $d) break;
