@@ -10,9 +10,12 @@ class dependency_manager
 
     const DEPXML = "dependencies.xml";
 
+    static function trace(...$msgs) {        if (class_exists("php_logger")) php_logger::trace($msgs); } // else print_r($msgs);   }
+    static function debug(...$msgs) {        if (class_exists("php_logger")) php_logger::debug($msgs); } // else print_r($msgs);   }
+
     public function __construct($fnames = null, $wdir = null)
     {
-// print "\n<br/>dependency_manager::__construct: "; print_r($fnames); print_r($wdir);
+        self::trace("dependency_manager::__construct: ", $fnames, $wdir);
         if ($fnames != null) {
             if (is_string($fnames)) $this->sources = array($fnames);
             else if (is_array($fnames)) $this->sources = $fnames;
@@ -21,29 +24,29 @@ class dependency_manager
         if ($wdir != null) $this->workingDir = $wdir;
         if (substr($this->workingDir, -1) != "/") $this->workingDir .= "/";
 
-//   print    "\n<br/>Initializing..";
+        // php_logger::trace("Initializing..");
         $this->ensure_config();
         $this->load_internal_resources();
         $this->include_autoloads();  // for the internal resources, if needed.  Others will follow.
-//   print "\n<br/>Loading sources..";
+        self::debug("Loading sources..");
         $this->load_sources();
-//  print "\n<br/>Loaded sources..";
+        self::debug("Loaded sources..");
         $this->include_autoloads();
-//  print "\n<br/>Loaded autoloads..";
+        self::debug("Loaded autoloads..");
     }
 
     public function internal_resource_list() {
         // Should be maintained here, in this form, as well as dependencies.xml for propagation
         // Cannot use xml_file here, since it is the dependency we are pulling in....  Hence, internal.
         return array(
-            "github://bhoogter:xml-file/phar:0.2.70"
+            "github://bhoogter:xml-file/phar:0.2.70",
+            "github://bhoogter:php-logger/phar:1.0.0",
     );
     }
 
     protected function ensure_config() 
     {
-// print "\n<br/>Ensuring Config..";
-// print "\n<br/>workingDir=$this->workingDir";
+        self::trace("Ensuring Config...", "workingDir=$this->workingDir");
         if (!file_exists($this->workingDir)) 
             @mkdir($this->workingDir, 0777);
         if (!file_exists($this->workingDir)) throw new Exception("Cannot secure working folder: $this->workingDir");
@@ -57,7 +60,7 @@ class dependency_manager
 
     protected function load_internal_resources()
     {
-// print "\n<br/>php-dependency-manager::load_internal_resources, list="; print_r($this->internal_resource_list());
+        self::debug("php-dependency-manager::load_internal_resources, list=", $this->internal_resource_list());
         foreach ($this->internal_resource_list() as $resource) 
             $this->load_resource_string($resource);
     }
@@ -72,24 +75,24 @@ class dependency_manager
             $dd = dirname($d);
             if ($dd == $d) break;
             $d = $dd;
-//print ("\nd=$d");
             if (file_exists($v = ("$d/" . self::DEPXML))) return $v;
         }
-        return __DIR__ . "/" . self::DEPXML;
+        $result = __DIR__ . "/" . self::DEPXML;
+        self::debug("dependency_manager::default_source: " . $result);
+        return $result;
     }
 
     public function load_sources()
     {
         $sources_loaded = array();
         $this->dependencies = array();
-// print "\n<br/>load_sources()"; 
+        self::trace("load_sources()"); 
         if (is_null($this->sources)) $this->sources = array();
         if (!is_array($this->sources)) throw new Exception("Sources is not an array.");
         $this->sources = array_unique($this->sources);
         while (count($to_load = array_diff($this->sources, $sources_loaded)) > 0) {
-// print_r($to_load);
             foreach ($to_load as $source) {
-// print "\n<br/>load_sources(), loading source=$source";
+                self::debug("load_sources(), loading source=$source");
                 $sources_loaded[] = $source;
                 $this->dependencies[] = new xml_file($source);
             }
@@ -97,7 +100,7 @@ class dependency_manager
 // print_r(array_diff($this->sources, $sources_loaded));
             $this->ensure_dependencies();
         }
-// print "\n<br/>load_sources(), ensuring dependencies...";
+        self::trace("load_sources(), ensuring dependencies...");
         $this->ensure_dependencies();
     }
 
@@ -117,14 +120,12 @@ class dependency_manager
                 $this->process_dependency($resourceFile, $dType, $dName);
             }
         }
-// print("\n======================\n");
-// print_r($this->resources);
-// print("\n======================\n");
+    self::trace("\n======================\n", $this->resources, "\n======================\n");
     }
 
     public function load_resource_string($str)
     {
-// print "\n<br/>load_resource_string: $str";
+        self::trace("load_resource_string: $str");
         $opts = [];
         $resourceFile = "";
         if ("github://" == substr($str, 0, 9))
@@ -139,7 +140,7 @@ class dependency_manager
                 $opts['type'] = sizeof($namParts) > 1 ? $namParts[1] : 'phar';
                 $opts['name'] = sizeof($namParts) > 0 ? $namParts[0] : '';
 
-// print "\n<br/>LOAD RESOURCE STRING PARTS: nam=${opts[name]}, grp=${opts[group]}, typ=${opts[type]}, ver=${opts[version]}";
+                self::trace("LOAD RESOURCE STRING PARTS: nam=${opts[name]}, grp=${opts[group]}, typ=${opts[type]}, ver=${opts[version]}");
 
                 $resourceFile = $this->get_git($opts['group'], $opts['name'], $opts['version'], $opts['type']);
             }
@@ -149,11 +150,11 @@ class dependency_manager
 
     public function get_git($grp, $nam, $ver, $typ = 'phar', $url = '')
     {
-// print "\n<br/>source::get_git($grp, $nam, $ver, $typ, $url)";
+        self::debug("source::get_git($grp, $nam, $ver, $typ, $url)");
         if ($this->dynmaicVersioning()) $ver = $this->resolveGitVersion($grp, $nam, $ver, $url);
         $resourceFile = $this->local_file_name($grp, $nam, $ver, $typ);
         if ($url == null) $url = "https://github.com/$grp/$nam/releases/download/$ver/$nam.$typ";
-//  print "\n<br/>source::get_git: url=$url, resourceFile=$resourceFile";
+        self::debug("source::get_git: url=$url, resourceFile=$resourceFile");
         if (!file_exists($resourceFile)) $this->fetch_dependency($url, $resourceFile);
         return $resourceFile;
     }
@@ -173,20 +174,20 @@ class dependency_manager
 
     public function local_file_name($group, $name, $version, $type)
     {
-// print "\n<br/>local_file_name(), workingDir = $this->workingDir";
+        self::debug("local_file_name(), workingDir = $this->workingDir");
         $result = $this->slugify($group) . "-" . $this->slugify($name) . '-' . $this->slugify($version) . "." . $type;
         while (strpos($result, "--") !== false) $result = str_replace("--", "-", $result);
 
         $result = $this->workingDir . $result;
         $result = str_replace('/', '\\', $result);
 
-// print "\n<br/>local_file_name(): $result";
+        self::debug("local_file_name(): $result");
         return $result;
     }
 
     public function fetch_dependency($url, $local_file)
     {
-// print("\nphp-dependency-manager::fetch_dependency(url=$url, local_file=$local_file)");
+        self::debug("php-dependency-manager::fetch_dependency(url=$url, local_file=$local_file)");
         if (function_exists("curl_init")) {
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
@@ -198,15 +199,13 @@ class dependency_manager
             $err = curl_error($ch);
             curl_close($ch);
 
-// print("\n================");
-// print("\n$result");
-// print("\n================");
+            self::trace("\n================\n$result\n================\n");
             if ($result === false || $result == "") {
                 throw new Exception("Error requiring dependency: $url - $err");
                 // print("<br/>ERROR REQURING DEPENDENCY: $url - $err");
                 // die();
             }
-// print("\n<br/>local_file=$local_file");
+            self::trace("local_file=$local_file");
             file_put_contents($local_file, $result);
         }
 
@@ -224,20 +223,21 @@ class dependency_manager
 
     public function scan_phar_file($phar_file, $name)
     {
-//  print("\n<br/>Reading PHAR: $phar_file\n");
+        self::debug("Reading PHAR: $phar_file");
         $phar = new Phar($phar_file, FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::KEY_AS_FILENAME, $name);
-// print("\n<br/>Requiring PHAR: $phar_file");
-        include_once($phar_file);
+        self::trace("Requiring PHAR: $phar_file");
+        require_once($phar_file);
+        self::trace("Required PHAR: $phar_file");
         $basepath = "phar://" . $phar->getPath() . "/";
-// print("\nBASEPATH=$basepath");
+        self::trace("BASEPATH=$basepath");
         foreach (new RecursiveIteratorIterator($phar) as $file) {
-// print("\nFILEPATH=". $file->getPath());
+            self::trace("FILEPATH=". $file->getPath());
             $filename = str_replace($basepath, "", $file->getPath() . '/' . $file->getFilename());
-// print("\nscan_phar_file: basepath=$basepath, filename=$filename");
+            self::trace("scan_phar_file: basepath=$basepath, filename=$filename");
             $this->resources[$filename] = $name;
             if (substr_compare($filename, self::DEPXML, -strlen(self::DEPXML)) === 0) {
                 $add = "phar://$name/$filename";  // Load via PHAR alias (path in travis is unreliable)
-// print "\n<br/>Found module dependencies: " . $file->getPath() . '/' . $file->getFilename() . ", adding: $add";
+                self::trace("Found module dependencies: " . $file->getPath() . '/' . $file->getFilename() . ", adding: $add");
                 $this->sources[] = $add;
             }
         }
@@ -245,28 +245,28 @@ class dependency_manager
 
     public function include($fname)
     {
-// print("\n<br/>Searching for: [$fname]");
-// print_r($this->resources);
+        self::debug("include: Searching for: [$fname]");
+        self::trace($this->resources);
         foreach ($this->resources as $file => $pharAlias) {
-// print("\n<br/>Searching for: [$fname] in [$pharAlias]: $file");
+            self::debug("Searching for: [$fname] in [$pharAlias]: $file");
             $found = false;
             if (strpos($file, $fname) !== false) $found = true;
             if (strpos($file, $k = str_replace("_", "-", $fname)) !== false) $found = true;
 
-// print("\n<br/>Searching for: [$fname] in [$pharAlias]: (" . ($found?'found':'not found') . ") $file");
+            self::debug("Searching for: [$fname] in [$pharAlias]: (" . ($found?'found':'not found') . ") $file");
             if ($found) {
                 $src = "phar://$pharAlias/$file";
-// print("\n<br/>Searching for: [$fname] in [$pharAlias]: **FOUND** $file");
+                self::debug("Searching for: [$fname] in [$pharAlias]: **FOUND** $file");
                 if (in_array($src, $this->included)) {
-// print("\n<br/>file=$file, src=$src SKIPPED");
+                    self::debug("file=$file, src=$src SKIPPED");
                     continue;
                 }
-// print("\n<br/>Requiring: $src");
+                self::debug("Requiring: $src");
                 require_once($src);
                 $this->included[] = $src;
             }
         }
-//  print("\n<br/>Searching for: [$fname], NOT FOUND");
+        self::debug("\n<br/>Searching for: [$fname], NOT FOUND");
     }
 
     public function include_once($fname)    {   return $this->include($fname);     }
@@ -376,7 +376,7 @@ class dependency_manager
 if (!function_exists("dependency_manager")) {
     function dependency_manager($scope = "default", $vsources = null, $vworkspace = null, $autoload = null)
     {
-// print "\n<br/>dependency_manager($scope): "; print "\nvsources="; print_r($vsources); print("\nworkspace="); print_r($vworkspace);
+        dependency_manager::debug("dependency_manager($scope):", "vsources=", $vsources, "\nworkspace=", $vworkspace);
         static $o;
         if (!is_string($scope)) $scope = "default";
         if ($o == null) $o = array();

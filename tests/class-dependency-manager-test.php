@@ -28,7 +28,7 @@ final class dependency_manager_test extends TestCase
         $obj = dependency_manager(dependency_manager_test::SCOPE);
         $this->assertNotNull($obj);
         $this->assertEquals(1, sizeof($obj->dependencies));
-        $this->assertEquals(7, sizeof($obj->resources));
+        $this->assertEquals(8, sizeof($obj->resources));
     }
 
     public function testDefaultSource()

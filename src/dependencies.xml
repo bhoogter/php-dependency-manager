@@ -4,6 +4,7 @@
     <module>
         <dependencies>
             <dependency group="bhoogter" name="xml-file" version="0.2.70" />
+            <dependency group="bhoogter" name="php-logger" version="1.0.0" />
         </dependencies>
     </module>
 </modules>
