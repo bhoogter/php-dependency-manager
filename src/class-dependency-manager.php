@@ -42,7 +42,7 @@ class dependency_manager
         // Should be maintained here, in this form, as well as dependencies.xml for propagation
         // Cannot use xml_file here, since it is the dependency we are pulling in....  Hence, internal.
         return array(
-            "github://bhoogter:xml-file/phar:0.2.72",
+            "github://bhoogter:xml-file/phar:0.2.74",
             "github://bhoogter:php-logger/phar:1.0.0",
     );
     }

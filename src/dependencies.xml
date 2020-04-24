@@ -3,7 +3,7 @@
 <modules>
     <module>
         <dependencies>
-            <dependency group="bhoogter" name="xml-file" version="0.2.72" />
+            <dependency group="bhoogter" name="xml-file" version="0.2.74" />
             <dependency group="bhoogter" name="php-logger" version="1.0.0" />
         </dependencies>
     </module>
