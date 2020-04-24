@@ -3,7 +3,7 @@
 <modules>
     <module>
         <dependencies>
-            <dependency name="xml-file" group="bhoogter" version="0.2.74" />
+            <dependency name="xml-file" group="bhoogter" version="0.2.75" />
         </dependencies>
     </module>
 </modules>
