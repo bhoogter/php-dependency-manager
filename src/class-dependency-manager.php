@@ -37,6 +37,11 @@ class dependency_manager
         $this->included = array();
     }
 
+    public function __destruct()
+    {
+        self::trace("DEPENDENCY_MANAGER::__DESTRUCT: ");
+    }
+
     public function __construct($fnames = null, $wdir = null)     {         
         self::trace("DEPENDENCY_MANAGER::__CONSTRUCT: ", $fnames, $wdir);
         $this->clear();
@@ -484,10 +489,11 @@ if (!function_exists("dependency_manager")) {
 
         dependency_manager::info("DEPENDENCY_MANAGER: ", "vsources=", $vsources, ", workspace=", $vworkspace, ", AL=", $autoload);
         if (!isset($depmgr)) {
+            // print "\n------------\n"; debug_print_backtrace(0, 5);
             dependency_manager::info("dependency_manager - INITIALIZING CLONE");
             $depmgr = new dependency_manager($vsources, $vworkspace);
         } else if ($vsources != null || $vworkspace != null) {
-            // print "\n------------\n"; debug_print_backtrace();
+            // print "\n------------\n"; debug_print_backtrace(0, 5);
             dependency_manager::info("dependency_manager - INITIALIZING ADDING");
             $depmgr->init($vsources, $vworkspace);
         }
