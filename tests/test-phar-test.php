@@ -12,7 +12,6 @@ final class test_phar_test extends TestCase
             [
                 __DIR__ . "/resources/dependencies-test-phars.xml",
                 __DIR__ . "/resources/dependencies.xml",
-
             ],
             __DIR__ . "/resources/phars"
         );
@@ -20,7 +19,9 @@ final class test_phar_test extends TestCase
 
     public function setUp(): void
     {
+        // dependency_manager::$log_dump = true;
         // $this->clearObjects();
+        print_r(dependency_manager()->packages);
     }
 
     public function testLoadDependencyManager(): void

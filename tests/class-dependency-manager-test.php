@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 use PHPUnit\Framework\TestCase;
 
 final class dependency_manager_test extends TestCase
@@ -19,7 +21,7 @@ final class dependency_manager_test extends TestCase
 
     public function testSetupCorrect(): void
     {
-        $this->assertEquals(1, 1);
+        $this->assertTrue(true);
     }
 
     public function testLoadDependencyManager(): void
@@ -32,7 +34,7 @@ final class dependency_manager_test extends TestCase
 
     public function testDefaultSource()
     {
-        $result = dependency_manager() -> default_source();
+        $result = dependency_manager()->default_source();
         $this->assertTrue(strpos($result, "dependencies.xml") !== false);
     }
 }

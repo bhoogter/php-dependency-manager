@@ -3,19 +3,19 @@
 class dependency_manager
 {
     public $workingDir = __DIR__;
-    public $sources;
+    public $sources = array();
     public $dependencies = array();
+    public $packages = array();
     public $resources = array();
     private $included = array();
 
-    
     public const DEPXML = "dependencies.xml";
     
     public static $log_dump = false;
     private static function dump_log($type, ...$msgs) { 
         if (!self::$log_dump) return; 
         $s = "\n$type: ";
-        foreach($msgs as $m) $s .= is_string($m) ? $m : print_r($m, true);
+        foreach($msgs as $m) $s .= is_string($m) ? $m . " " : print_r($m, true);
         print $s;
     }
     private static function has_logger() {
@@ -25,31 +25,49 @@ class dependency_manager
     }
     static function trace(...$msgs) { if (self::has_logger()) php_logger::trace(...$msgs); else self::dump_log("TRACE", ...$msgs); }
     static function debug(...$msgs) { if (self::has_logger()) php_logger::debug(...$msgs); else self::dump_log("DEBUG", ...$msgs); }
+    static function info(...$msgs) { if (self::has_logger()) php_logger::info(...$msgs); else self::dump_log("INFO", ...$msgs); }
     static function log(...$msgs) { if (self::has_logger()) php_logger::log(...$msgs); else self::dump_log("LOG", ...$msgs); }
 
-    public function __construct($fnames = null, $wdir = null)
-    {
-        self::trace("dependency_manager::__construct: ", $fnames, $wdir);
-        if ($fnames != null) {
-            if (is_string($fnames)) $this->sources = array($fnames);
-            else if (is_array($fnames)) $this->sources = $fnames;
-        }
+    public function clear() {
+        $this->workingDir = __DIR__;
+        $this->sources = array();
+        $this->dependencies = array();
+        $this->packages = array();
+        $this->resources = array();
+        $this->included = array();
+    }
 
-        if ($wdir != null) $this->workingDir = $wdir;
+    public function __construct($fnames = null, $wdir = null)     {         
+        self::trace("DEPENDENCY_MANAGER::__CONSTRUCT: ", $fnames, $wdir);
+        $this->clear();
+        $this->init($fnames, $wdir);     
+    }
+
+    public function init($fnames = null, $wdir = null)
+    {
+        self::trace("DEPENDENCY_MANAGER::INIT: ", $fnames, $wdir);
+        // print "\n";debug_print_backtrace(0, 3);
+        if ($fnames != null) {
+            if (is_string($fnames)) $fnames = array($fnames);
+            else if (!is_array($fnames)) throw new Exception ("Bad argument 1 to dependency_manager().  Expected string or array, got " + gettype($fnames) + ".");
+        }
+        $this->sources = array_merge($this->sources, $fnames);
+
+        if (is_string($wdir)) $this->workingDir = $wdir;
         if (substr($this->workingDir, -1) != "/") $this->workingDir .= "/";
 
         foreach(array_keys($fnames) as $fk) $fnames[$fk] = realpath($fnames[$fk]);
         $wdir = realpath($wdir);
 
-        self::debug("Initializing..");
+        self::debug("INIT: Initializing..");
         $this->ensure_config();
         $this->load_internal_resources();
         $this->include_autoloads();  // for the internal resources, if needed.  Others will follow.
-        self::debug("Loading sources..");
+        self::debug("INIT: Loading sources..");
         $this->load_sources();
-        self::debug("Loaded sources..");
+        self::debug("INIT: Loaded sources..");
         $this->include_autoloads();
-        self::debug("Loaded autoloads..");
+        self::debug("INIT: Loaded autoloads..");
     }
 
     public function internal_resource_list() {
@@ -118,17 +136,17 @@ class dependency_manager
 
     public function load_sources()
     {
-        $sources_loaded = array();
         $this->dependencies = array();
         self::trace("load_sources()"); 
         if (is_null($this->sources)) $this->sources = array();
         if (!is_array($this->sources)) throw new Exception("Sources is not an array.");
         $this->sources = array_unique($this->sources);
-        while (count($to_load = array_diff($this->sources, $sources_loaded)) > 0) {
+        while (count($to_load = array_diff($this->sources, array_keys($this->dependencies))) > 0) {
+            self::log("LOAD_SOURCES TO LOAD: ", $to_load);
             foreach ($to_load as $source) {
-                self::debug("load_sources(), loading source=$source");
-                $sources_loaded[] = $source;
-                $this->dependencies[] = new xml_file($source);
+                $source = $source;
+                self::info("load_sources(), loading source=$source");
+                $this->dependencies[$source] = new xml_file($source);
             }
 // print "\n====> ";
 // print_r(array_diff($this->sources, $sources_loaded));
@@ -140,45 +158,89 @@ class dependency_manager
 
     public function ensure_dependencies()
     {
-        foreach ($this->dependencies as $dependency) {
+        self::log("ensure_dependencies()");
+        foreach ($this->dependencies as $sourceFile => $dependency) {
             $deps = $dependency->lst("//*/dependency/@name");
-// print ("\n<br/>DEPS="); print_r($deps);
+            self::log("DEPS=", $deps);
             foreach ($deps as $dName) {
+                $dRepo = $dependency->get("//*/dependency[@name='$dName']/@repository");
                 $dGrps = $dependency->get("//*/dependency[@name='$dName']/@group");
                 $dVers = $dependency->get("//*/dependency[@name='$dName']/@version");
                 $dType = $dependency->get("//*/dependency[@name='$dName']/@type");
                 $dUrls = $dependency->get("//*/dependency[@name='$dName']/@url");
 
-                if ($dType == null) $dType = "phar";
-                $resourceFile = $this->get_git($dGrps, $dName, $dVers, $dType);
-                $this->process_dependency($resourceFile, $dType, $dName);
+                $rs = self::build_resource_string($dRepo, $dGrps, $dName, $dVers, $dType, $dUrls);
+                self::log("Loading resource string [$dName@$dRepo]: $rs");
+                $this->load_resource_string($rs);
             }
         }
-    self::trace("\n======================\n", $this->resources, "\n======================\n");
+    // self::trace("\n======================\n", $this->resources, "\n======================\n");
+    }
+
+    public static function build_resource_string($repo, $group, $name, $version, $type = null, $url = null) {
+        if ($repo == null || $repo == "") $repo = "github";
+        if ($type == "") $type = null;
+        if ($url == "") $url = null;
+        $types = ($type == null ? "" : "/$type");
+        $urls = ($url == null ? "" : ":$url");
+        switch($repo) {
+            case "github": return "github://$group:$name$types:$version$urls";
+            default: return null;
+        }
+    }
+
+    public static function parse_resource_string($rs) {
+        $opts = [];
+
+        if ("github://" == substr($rs, 0, 9)) {
+            $opts['repo'] = 'github';
+            $rs = substr($rs, 9);
+        } else {
+            $opts['repo'] = '';
+        }
+
+        $parts = explode(":", $rs, 4);
+        $opts['group'] = sizeof($parts) > 0 ? $parts[0] : "";
+        $opts['name'] = sizeof($parts) > 1 ? $parts[1] : "";
+        $opts['version'] = sizeof($parts) > 2 ? $parts[2] : "";
+        $opts['url'] = sizeof($parts) > 3 ? $parts[3] : "";
+
+        $namParts = explode('/', $opts['name']);
+        $opts['type'] = sizeof($namParts) > 1 ? $namParts[1] : 'phar';
+        $opts['name'] = sizeof($namParts) > 0 ? $namParts[0] : '';
+
+        $verParts = explode('@', $opts['version']);
+        $opts['ext'] = sizeof($verParts) > 1 ? $verParts[1] : '';
+        $opts['version'] = sizeof($verParts) > 0 ? $verParts[0] : '';
+
+        self::trace("LOAD RESOURCE STRING PARTS: rep=${opts['repo']}, nam=${opts['name']}, grp=${opts['group']}, typ=${opts['type']}, ver=${opts['version']}");
+        return $opts;
     }
 
     public function load_resource_string($str)
     {
         self::trace("load_resource_string: $str");
-        $opts = [];
         $resourceFile = "";
-        if ("github://" == substr($str, 0, 9))
-            {
-                $gitstr = substr($str, 9);
-                $parts = explode(":", $gitstr);
-                $opts['group'] = sizeof($parts) > 0 ? $parts[0] : "";
-                $opts['name'] = sizeof($parts) > 1 ? $parts[1] : "";
-                $opts['version'] = sizeof($parts) > 2 ? $parts[2] : "";
 
-                $namParts = explode('/', $opts['name']);
-                $opts['type'] = sizeof($namParts) > 1 ? $namParts[1] : 'phar';
-                $opts['name'] = sizeof($namParts) > 0 ? $namParts[0] : '';
+        $opts = self::parse_resource_string($str);
+        self::log("Checking " . $opts['name']);
+        if (false != array_key_exists($opts['name'], $this->packages)) {
+            self::log("Skipping already loaded package: " . $opts['name']);
+            return $this->packages[$opts['name']];
+        }
 
-                self::trace("LOAD RESOURCE STRING PARTS: nam=${opts[name]}, grp=${opts[group]}, typ=${opts[type]}, ver=${opts[version]}");
+        switch($opts['repo']) {
+            case "github": 
+                $resourceFile = $this->get_git($opts['group'], $opts['name'], $opts['version'], $opts['type'], $opts['url']);
+                break;  
+            default:
+                $resourceFile = null;
+        }
 
-                $resourceFile = $this->get_git($opts['group'], $opts['name'], $opts['version'], $opts['type']);
-            }
-        $this->process_dependency($resourceFile, $opts['type'], $opts['name']);
+        if ($resourceFile != null) {
+            $this->process_dependency($resourceFile, $opts['type'], $opts['name']);
+            $this->packages[$opts['name']] = $resourceFile;
+        }
         return $resourceFile;
     }
 
@@ -236,7 +298,7 @@ class dependency_manager
             $err = curl_error($ch);
             curl_close($ch);
 
-            self::trace("\n================\n$result\n================\n");
+            // self::trace("\n================\n$result\n================\n");
             if ($result === false || $result == "") {
                 throw new Exception("Error requiring dependency: $url - $err");
                 // print("<br/>ERROR REQURING DEPENDENCY: $url - $err");
@@ -250,6 +312,7 @@ class dependency_manager
     }
 
     public function process_dependency($resourceFile, $type, $name) {
+        self::log("Processing dependency: $name");
         switch($type)
         {
             case "phar":
@@ -260,17 +323,15 @@ class dependency_manager
 
     public function scan_phar_file($phar_file, $name)
     {
-        self::debug("Reading PHAR: $phar_file");
+        self::debug("Scanning Phar File: $phar_file");
         $phar = new Phar($phar_file, FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::KEY_AS_FILENAME, $name);
         self::trace("Requiring PHAR: $phar_file");
         require_once($phar_file);
-        self::trace("Required PHAR: $phar_file");
         $basepath = "phar://" . $phar->getPath() . "/";
-        self::trace("BASEPATH=$basepath");
+        self::trace("Basepath=$basepath");
         foreach (new RecursiveIteratorIterator($phar) as $file) {
-            self::trace("FILEPATH=". $file->getPath());
             $filename = str_replace($basepath, "", $file->getPath() . '/' . $file->getFilename());
-            self::trace("scan_phar_file: basepath=$basepath, filename=$filename");
+            self::trace("SCAN filename=$filename");
             $this->resources[$filename] = $name;
             if (substr_compare($filename, self::DEPXML, -strlen(self::DEPXML)) === 0) {
                 $add = "phar://$name/$filename";  // Load via PHAR alias (path in travis is unreliable)
@@ -413,18 +474,22 @@ class dependency_manager
 if (!function_exists("dependency_manager")) {
     function dependency_manager($vsources = null, $vworkspace = null, $autoload = null)
     {
-        dependency_manager::debug("DEPENDENCY_MANAGER:", "vsources=", $vsources, ", workspace=", $vworkspace, ", AL=", $autoload);
         static $depmgr;
-
+        
         if ($autoload != null) {
+            // print "\nAUTOLOAD=$autoload";
             if (isset($depmgr)) $depmgr->include($autoload);
             return;
         }
 
+        dependency_manager::info("DEPENDENCY_MANAGER: ", "vsources=", $vsources, ", workspace=", $vworkspace, ", AL=", $autoload);
         if (!isset($depmgr)) {
-            dependency_manager::debug("dependency_manager - INITIALIZING");
+            dependency_manager::info("dependency_manager - INITIALIZING CLONE");
+            $depmgr = new dependency_manager($vsources, $vworkspace);
+        } else if ($vsources != null || $vworkspace != null) {
             // print "\n------------\n"; debug_print_backtrace();
-            @$depmgr = new dependency_manager($vsources, $vworkspace);
+            dependency_manager::info("dependency_manager - INITIALIZING ADDING");
+            $depmgr->init($vsources, $vworkspace);
         }
 
         return $depmgr;
