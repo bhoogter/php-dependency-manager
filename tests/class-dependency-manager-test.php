@@ -4,7 +4,10 @@ use PHPUnit\Framework\TestCase;
 
 final class dependency_manager_test extends TestCase
 {
-    const SCOPE = "dependency_manager_test";
+    public static function setUpBeforeClass(): void
+    {
+        dependency_manager(__DIR__ . "/resources/dependencies.xml", __DIR__ . "/resources/phars");
+    }
 
     public static function clearObjects()
     {
@@ -12,10 +15,6 @@ final class dependency_manager_test extends TestCase
             if ($f == __DIR__ . "resources/work/.gitkeep") continue;
             unlink($f);
         }
-    }
-    public static function setUpBeforeClass(): void
-    {
-        dependency_manager(dependency_manager_test::SCOPE, __DIR__ . "/resources/dependencies.xml", __DIR__ . "/resources/work");
     }
 
     public function testSetupCorrect(): void
@@ -25,7 +24,7 @@ final class dependency_manager_test extends TestCase
 
     public function testLoadDependencyManager(): void
     {
-        $obj = dependency_manager(dependency_manager_test::SCOPE);
+        $obj = dependency_manager();
         $this->assertNotNull($obj);
         $this->assertEquals(1, sizeof($obj->dependencies));
         $this->assertEquals(8, sizeof($obj->resources));
@@ -33,7 +32,7 @@ final class dependency_manager_test extends TestCase
 
     public function testDefaultSource()
     {
-        $result = dependency_manager(dependency_manager_test::SCOPE) -> default_source();
+        $result = dependency_manager() -> default_source();
         $this->assertTrue(strpos($result, "dependencies.xml") !== false);
     }
 }

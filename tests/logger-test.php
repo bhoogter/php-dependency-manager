@@ -4,11 +4,9 @@ use PHPUnit\Framework\TestCase;
 
 final class logger_test extends TestCase
 {
-    const SCOPE = "dependency_manager_test";
-
     public static function setUpBeforeClass(): void
     {
-        dependency_manager(dependency_manager_test::SCOPE, __DIR__ . "/resources/dependencies.xml", __DIR__ . "/resources/work");
+        dependency_manager(__DIR__ . "/resources/dependencies.xml", __DIR__ . "/resources/phars");
     }
 
     public function testSetupCorrect(): void

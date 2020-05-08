@@ -1,12 +1,21 @@
 <?php
+
 declare(strict_types=1);
+
 use PHPUnit\Framework\TestCase;
 
 final class test_phar_test extends TestCase
 {
-    public static function setUpBeforeClass(): void 
+    public static function setUpBeforeClass(): void
     {
-        dependency_manager("test_phar_test", __DIR__ . "/resources/dependencies-test-phars.xml", __DIR__ . "/resources/work");
+        dependency_manager(
+            [
+                __DIR__ . "/resources/dependencies-test-phars.xml",
+                __DIR__ . "/resources/dependencies.xml",
+
+            ],
+            __DIR__ . "/resources/phars"
+        );
     }
 
     public function setUp(): void
