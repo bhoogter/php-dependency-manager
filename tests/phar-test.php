@@ -11,10 +11,11 @@ final class test_phar_test extends TestCase
         dependency_manager(
             [
                 __DIR__ . "/resources/dependencies-test-phars.xml",
-                __DIR__ . "/resources/dependencies.xml",
+                __DIR__ . "/../src/dependencies.xml",
             ],
             __DIR__ . "/resources/phars"
         );
+        // dependency_manager::$log_dump = true;
     }
 
     public function setUp(): void

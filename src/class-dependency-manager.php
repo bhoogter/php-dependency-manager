@@ -9,6 +9,8 @@ class dependency_manager
     public $resources = array();
     private $included = array();
 
+    public $proxy;
+
     public const DEPXML = "dependencies.xml";
     
     public static $log_dump = false;
@@ -58,11 +60,15 @@ class dependency_manager
         }
         $this->sources = array_merge($this->sources, $fnames);
 
-        if (is_string($wdir)) $this->workingDir = $wdir;
-        if (substr($this->workingDir, -1) != "/") $this->workingDir .= "/";
-
-        foreach(array_keys($fnames) as $fk) $fnames[$fk] = realpath($fnames[$fk]);
         $wdir = realpath($wdir);
+        if (is_string($wdir)) $this->workingDir = $wdir;
+        if (substr($this->workingDir, -1) != DIRECTORY_SEPARATOR) $this->workingDir .= DIRECTORY_SEPARATOR;
+
+        foreach($fnames as $fk=>$v) {
+            $t = realpath($v);
+            if (false === $t) throw new Exception("Cannot load source: $v");
+            $fnames[$fk] = $t;
+        }
 
         self::debug("INIT: Initializing..");
         $this->ensure_config();
@@ -78,10 +84,19 @@ class dependency_manager
     public function internal_resource_list() {
         // Should be maintained here, in this form, as well as dependencies.xml for propagation
         // Cannot use xml_file here, since it is the dependency we are pulling in....  Hence, internal.
-        return array(
-            "github://bhoogter:xml-file/phar:0.2.79",
-            "github://bhoogter:php-logger/phar:1.0.0",
-    );
+        $deplist = file_get_contents(__DIR__ . "/" . self::DEPXML);
+        $deps = explode("\n", $deplist);
+        self::log($deps);
+        $result = [];
+        foreach($deps as $d) {
+            $m = [];
+            $pat = "/[<]dependency( group=['\"]([^'\"]*)['\"])?( name=['\"]([^'\"]*)['\"])?( version=['\"]([^'\"]*)['\"])?/i";
+            if (!preg_match($pat, $d, $m)) continue;
+            $str = "github://{$m[2]}:{$m[4]}:{$m[6]}";
+            $result[] = $str;
+        }
+
+        return $result;
     }
 
     protected function ensure_config() 
@@ -253,7 +268,7 @@ class dependency_manager
     {
         self::debug("source::get_git($grp, $nam, $ver, $typ, $url)");
         if ($this->dynmaicVersioning()) $ver = $this->resolveGitVersion($grp, $nam, $ver, $url);
-        $resourceFile = $this->local_file_name($grp, $nam, $ver, $typ);
+        $resourceFile = $this->local_file_name($grp, $nam, $ver, $typ, $url);
         self::debug("source::get_git: resourceFile=$resourceFile");
         if (!file_exists($resourceFile)) {
             if ($url == null) $url = "https://github.com/$grp/$nam/releases/download/$ver/$nam.$typ";
@@ -276,16 +291,20 @@ class dependency_manager
         return $text;
     }
 
-    public function local_file_name($group, $name, $version, $type)
+    public function local_file_name($group, $name, $version, $type, $url)
     {
         self::debug("local_file_name(), workingDir = $this->workingDir");
-        $result = $this->slugify($group) . "-" . $this->slugify($name) . '-' . $this->slugify($version) . "." . $type;
-        while (strpos($result, "--") !== false) $result = str_replace("--", "-", $result);
+        if ($url != null && $url != "") {
+            $result = $this->workingDir . basename($url);
+        } else {
+            $result = $this->slugify($group) . "-" . $this->slugify($name) . '-' . $this->slugify($version) . "." . $type;
+            while (strpos($result, "--") !== false) $result = str_replace("--", "-", $result);
 
-        $result = $this->workingDir . $result;
-        $result = str_replace('/', '\\', $result);
+            $result = $this->workingDir . $result;
+            $result = str_replace('/', '\\', $result);
 
-        self::debug("local_file_name(): $result");
+            self::debug("local_file_name(): $result");
+        }
         return $result;
     }
 
@@ -295,6 +314,8 @@ class dependency_manager
         if (function_exists("curl_init")) {
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
+            if (isset($this->proxy))
+              curl_setopt($ch, CURLOPT_PROXY, $this->proxy);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 // curl_setopt($ch, CURLOPT_HEADER, 1);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -323,6 +344,8 @@ class dependency_manager
             case "phar":
                 $this->scan_phar_file($resourceFile, $name);
                 break;
+            case "zip":
+                $this->unzip_file($resourceFile);
         }
     }
 
@@ -331,7 +354,7 @@ class dependency_manager
         self::debug("Scanning Phar File: $phar_file");
         $phar = new Phar($phar_file, FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::KEY_AS_FILENAME, $name);
         self::trace("Requiring PHAR: $phar_file");
-        require_once($phar_file);
+        @require_once($phar_file);
         $basepath = "phar://" . $phar->getPath() . "/";
         self::trace("Basepath=$basepath");
         foreach (new RecursiveIteratorIterator($phar) as $file) {
@@ -343,6 +366,24 @@ class dependency_manager
                 self::trace("Found module dependencies: " . $file->getPath() . '/' . $file->getFilename() . ", adding: $add");
                 $this->sources[] = $add;
             }
+        }
+    }
+
+    public function unzip_file($filename)
+    {
+    $filename=realpath($filename);
+    $dir = $this->workingDir . pathinfo($filename, PATHINFO_FILENAME);
+
+    $zip = new ZipArchive;
+    $res = $zip->open($filename);
+    if ($res !== FALSE) 
+        {
+        if (!is_dir($dir)) mkdir($dir);
+        if (!is_dir($dir)) throw new Exception("Cannot create output directory: $dir");
+        $zip->extractTo($dir);
+        $zip->close();
+        } else {
+            throw new Exception("Unable to unzip: $filename");
         }
     }
 

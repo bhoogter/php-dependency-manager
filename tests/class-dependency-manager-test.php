@@ -8,7 +8,7 @@ final class dependency_manager_test extends TestCase
 {
     public static function setUpBeforeClass(): void
     {
-        dependency_manager(__DIR__ . "/resources/dependencies.xml", __DIR__ . "/resources/phars");
+        dependency_manager(__DIR__ . "/../src/dependencies.xml", __DIR__ . "/resources/phars");
     }
 
     public static function clearObjects()
