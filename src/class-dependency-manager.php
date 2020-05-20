@@ -15,20 +15,21 @@ class dependency_manager
     
     public static $log_dump = false;
     private static function dump_log($type, ...$msgs) { 
-        if (!self::$log_dump) return; 
+        if (!self::$log_dump) return false;
         $s = "\n$type: ";
         foreach($msgs as $m) $s .= is_string($m) ? $m . " " : print_r($m, true);
         print $s;
+        return true;
     }
     private static function has_logger() {
         static $logger;
         if (!isset($logger)) $logger = class_exists("php_logger");
         return $logger;
     }
-    static function trace(...$msgs) { if (self::has_logger()) php_logger::trace(...$msgs); else self::dump_log("TRACE", ...$msgs); }
-    static function debug(...$msgs) { if (self::has_logger()) php_logger::debug(...$msgs); else self::dump_log("DEBUG", ...$msgs); }
-    static function info(...$msgs) { if (self::has_logger()) php_logger::info(...$msgs); else self::dump_log("INFO", ...$msgs); }
-    static function log(...$msgs) { if (self::has_logger()) php_logger::log(...$msgs); else self::dump_log("LOG", ...$msgs); }
+    static function trace(...$msgs) { return self::has_logger() ? php_logger::trace(...$msgs) : self::dump_log("TRACE", ...$msgs); }
+    static function debug(...$msgs) { return self::has_logger() ? php_logger::debug(...$msgs) : self::dump_log("DEBUG", ...$msgs); }
+    static function info(...$msgs) { return self::has_logger() ? php_logger::info(...$msgs) : self::dump_log("INFO", ...$msgs); }
+    static function log(...$msgs) { return self::has_logger() ? php_logger::log(...$msgs) : self::dump_log("LOG", ...$msgs); }
 
     public function clear() {
         $this->workingDir = __DIR__;
@@ -82,8 +83,6 @@ class dependency_manager
     }
 
     public function internal_resource_list() {
-        // Should be maintained here, in this form, as well as dependencies.xml for propagation
-        // Cannot use xml_file here, since it is the dependency we are pulling in....  Hence, internal.
         $deplist = file_get_contents(__DIR__ . "/" . self::DEPXML);
         $deps = explode("\n", $deplist);
         self::log($deps);

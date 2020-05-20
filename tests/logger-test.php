@@ -11,9 +11,10 @@ final class logger_test extends TestCase
 
     public function testSetupCorrect(): void
     {
-        php_logger::$suppress_output = true;
-        $this->assertTrue(php_logger::error("TEST TEXT"));
-        php_logger::clear_log_levels('none');
-        $this->assertFalse(php_logger::error("TEST TEXT"));
+        dependency_manager::$log_dump = false;
+        $this->assertFalse(dependency_manager()->trace("TEST TEXT"));
+        dependency_manager::$log_dump = true;
+        $this->assertTrue(dependency_manager()->info("TEST TEXT"));
+        dependency_manager::$log_dump = false;
     }
 }

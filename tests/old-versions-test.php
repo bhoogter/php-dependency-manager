@@ -25,6 +25,6 @@ final class old_version_phars extends TestCase
     public function testLoadDependencyManager(): void
     {
         print_r(dependency_manager()->packages);
-        $this->assertEquals(5, count(dependency_manager()->packages));
+        $this->assertEquals(4, count(dependency_manager()->packages));
     }
 }
