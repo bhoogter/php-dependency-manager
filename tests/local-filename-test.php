@@ -15,18 +15,22 @@ final class local_filename_test extends TestCase
         // self::$dm::$log_dump = true;
     }
 
+    private function fix($s) {
+        return str_replace("\\", DIRECTORY_SEPARATOR, $s);
+    }
+
     public function testLocalFilename(): void
     {
         $this->assertEquals(
-            '\tests\resources\phars\testgroup-testname-1-1-1.phar',
+            $this->fix('\tests\resources\phars\testgroup-testname-1-1-1.phar'),
             substr(self::$dm->local_file_name("testgroup", "testname", "1.1.1", "phar", null), -52)
         );
         $this->assertEquals(
-            '\tests\resources\phars\testgroup-testname-1-1-1.phar',
+            $this->fix('\tests\resources\phars\testgroup-testname-1-1-1.phar'),
             substr(self::$dm->local_file_name("testgroup", "testname", "1.1.1", "phar", null, 'dne'), -52)
         );
         $this->assertEquals(
-            '\tests\resources\other\testgroup-testname-1-1-1.phar',
+            $this->fix('\tests\resources\other\testgroup-testname-1-1-1.phar'),
             substr(self::$dm->local_file_name("testgroup", "testname", "1.1.1", "phar", null, 'other'), -52)
         );
     }
