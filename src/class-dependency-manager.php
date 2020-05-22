@@ -2,12 +2,12 @@
 
 class dependency_manager
 {
-    public $workingDir = __DIR__;
-    public $sources = array();
-    public $dependencies = array();
-    public $packages = array();
-    public $resources = array();
-    private $included = array();
+    public $workingDir = null;
+    public $sources = [];
+    public $dependencies = [];
+    public $packages = [];
+    public $resources = [];
+    private $included = [];
 
     public $proxy;
 
@@ -32,12 +32,13 @@ class dependency_manager
     static function log(...$msgs) { return self::has_logger() ? php_logger::log(...$msgs) : self::dump_log("LOG", ...$msgs); }
 
     public function clear() {
-        $this->workingDir = __DIR__;
-        $this->sources = array();
-        $this->dependencies = array();
-        $this->packages = array();
-        $this->resources = array();
-        $this->included = array();
+        $this->workingDir = null;
+        $this->sources = [];
+        $this->dependencies = [];
+        $this->packages = [];
+        $this->resources = [];
+        $this->included = [];
+        unset($this->proxy);
     }
 
     public function __destruct()
@@ -54,16 +55,33 @@ class dependency_manager
     public function init($fnames = null, $wdir = null)
     {
         self::trace("DEPENDENCY_MANAGER::INIT: ", $fnames, $wdir);
-        // print "\n";debug_print_backtrace(0, 3);
         if ($fnames != null) {
             if (is_string($fnames)) $fnames = array($fnames);
             else if (!is_array($fnames)) throw new Exception ("Bad argument 1 to dependency_manager().  Expected string or array, got " + gettype($fnames) + ".");
         }
         $this->sources = array_merge($this->sources, $fnames);
 
-        $wdir = realpath($wdir);
-        if (is_string($wdir)) $this->workingDir = $wdir;
-        if (substr($this->workingDir, -1) != DIRECTORY_SEPARATOR) $this->workingDir .= DIRECTORY_SEPARATOR;
+        if (is_string($wdir)) {
+            $wdir = realpath($wdir);
+            $wdir = [ '' => $wdir ];
+        } else if (!is_array($wdir) || count($wdir) == 0) {
+            $wdir = [ '' => __DIR__ ];
+        }
+
+        $cb = function($v) use ($wdir) { 
+            $x = realpath($v); 
+            if (false === $x) $x = realpath(dirname($v)) . DIRECTORY_SEPARATOR . basename($v);
+            return $x;
+        };
+        $wdir = array_map($cb, $wdir);
+        $wdir = array_filter($wdir, "is_string");
+
+        if (count($wdir) == 0) $wdir = [ '' => __DIR__];
+        else if (!isset($wdir[''])) $wdir[''] = array_values($wdir)[0];
+
+        $this->workingDir = $wdir;
+        self::debug("Working dirs: ", $this->workingDir);
+        // die(print_r($wdir, true));
 
         foreach($fnames as $fk=>$v) {
             $t = realpath($v);
@@ -83,7 +101,7 @@ class dependency_manager
     }
 
     public function internal_resource_list() {
-        $deplist = file_get_contents(__DIR__ . "/" . self::DEPXML);
+        $deplist = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . self::DEPXML);
         $deps = explode("\n", $deplist);
         self::log($deps);
         $result = [];
@@ -91,7 +109,7 @@ class dependency_manager
             $m = [];
             $pat = "/[<]dependency( group=['\"]([^'\"]*)['\"])?( name=['\"]([^'\"]*)['\"])?( version=['\"]([^'\"]*)['\"])?/i";
             if (!preg_match($pat, $d, $m)) continue;
-            $str = "github://{$m[2]}:{$m[4]}:{$m[6]}";
+            $str = $this->build_resource_string("github", $m[2], $m[4], $m[6]);
             $result[] = $str;
         }
 
@@ -100,11 +118,12 @@ class dependency_manager
 
     protected function ensure_config() 
     {
-        self::trace("Ensuring Config...", "workingDir=$this->workingDir");
-        if (!file_exists($this->workingDir)) 
-            @mkdir($this->workingDir, 0777);
-        if (!file_exists($this->workingDir)) 
-            throw new Exception("Cannot secure working folder: $this->workingDir");
+        self::trace("Ensuring Config...", "workingDir=", $this->workingDir);
+        foreach($this->workingDir as $dir) {
+// print "\ndir=$dir";
+            if (!file_exists($dir)) mkdir($dir, 0777);
+            if (!file_exists($dir)) throw new Exception("Cannot secure working folder: $dir");
+        }
 
         self::trace("Sources: ", gettype($this->sources));
         if ($this->sources == null) $this->sources = array($this->default_source());
@@ -127,16 +146,16 @@ class dependency_manager
 
     public function default_source()
     {
-        $phar = strpos(__FILE__, ".phar") !== false;
-        self::debug("dependency_manager::default_source, phar=$phar");
+        $is_phar = strpos(__FILE__, ".phar") !== false;
+        self::debug("dependency_manager::default_source, phar=$is_phar");
 
-        if (!$phar) {
-            if (file_exists($v = (dirname(__DIR__) . "/" . self::DEPXML))) return $v;
-            if (file_exists($v = (__DIR__ . "/" . self::DEPXML))) return $v;
-            if (file_exists($v = ($this->workingDir . "/" . self::DEPXML))) return $v;
+        if (!$is_phar) {
+            if (file_exists($v = (dirname(__DIR__) . DIRECTORY_SEPARATOR . self::DEPXML))) return $v;
+            if (file_exists($v = (__DIR__ . DIRECTORY_SEPARATOR . self::DEPXML))) return $v;
+            if (file_exists($v = ($this->workingDir[''] . DIRECTORY_SEPARATOR . self::DEPXML))) return $v;
         }
 
-        $D = [$this->workingDir, realpath(dirname(__DIR__)), realpath(__DIR__)];
+        $D = [$this->workingDir[''], realpath(dirname(__DIR__)), realpath(__DIR__)];
         foreach($D as $d) {
             while (strlen($d) >= strlen($_SERVER["DOCUMENT_ROOT"])) {
                 self::trace("SCAN: default_source -  d=$d");
@@ -144,11 +163,11 @@ class dependency_manager
                 $dd = dirname($d);
                 if ($dd == $d) break;
                 $d = $dd;
-                if (file_exists($v = ("$d/" . self::DEPXML))) return $v;
+                if (file_exists($v = ("$d" . DIRECTORY_SEPARATOR . self::DEPXML))) return $v;
             }
         }
 
-        $result = __DIR__ . "/" . self::DEPXML;
+        $result = __DIR__ . DIRECTORY_SEPARATOR . self::DEPXML;
         self::debug("dependency_manager::default_source: " . $result);
         return $result;
     }
@@ -187,13 +206,13 @@ class dependency_manager
                 $dVers = $dependency->get("//*/dependency[@name='$dName']/@version");
                 $dType = $dependency->get("//*/dependency[@name='$dName']/@type");
                 $dUrls = $dependency->get("//*/dependency[@name='$dName']/@url");
+                $dAltl = $dependency->get("//*/dependency[@name='$dName']/@alt");
 
                 $rs = self::build_resource_string($dRepo, $dGrps, $dName, $dVers, $dType, $dUrls);
                 self::log("Loading resource string [$dName@$dRepo]: $rs");
-                $this->load_resource_string($rs);
+                $this->load_resource_string($rs, $dAltl);
             }
         }
-    // self::trace("\n======================\n", $this->resources, "\n======================\n");
     }
 
     public static function build_resource_string($repo, $group, $name, $version, $type = null, $url = null) {
@@ -236,7 +255,7 @@ class dependency_manager
         return $opts;
     }
 
-    public function load_resource_string($str)
+    public function load_resource_string($str, $alt = '')
     {
         self::trace("load_resource_string: $str");
         $resourceFile = "";
@@ -250,7 +269,7 @@ class dependency_manager
 
         switch($opts['repo']) {
             case "github": 
-                $resourceFile = $this->get_git($opts['group'], $opts['name'], $opts['version'], $opts['type'], $opts['url']);
+                $resourceFile = $this->get_git($opts['group'], $opts['name'], $opts['version'], $opts['type'], $opts['url'], $alt);
                 break;  
             default:
                 $resourceFile = null;
@@ -263,11 +282,11 @@ class dependency_manager
         return $resourceFile;
     }
 
-    public function get_git($grp, $nam, $ver, $typ = 'phar', $url = '')
+    public function get_git($grp, $nam, $ver, $typ = 'phar', $url = '', $alt = '')
     {
         self::debug("source::get_git($grp, $nam, $ver, $typ, $url)");
         if ($this->dynmaicVersioning()) $ver = $this->resolveGitVersion($grp, $nam, $ver, $url);
-        $resourceFile = $this->local_file_name($grp, $nam, $ver, $typ, $url);
+        $resourceFile = $this->local_file_name($grp, $nam, $ver, $typ, $url, $alt);
         self::debug("source::get_git: resourceFile=$resourceFile");
         if (!file_exists($resourceFile)) {
             if ($url == null) $url = "https://github.com/$grp/$nam/releases/download/$ver/$nam.$typ";
@@ -290,17 +309,19 @@ class dependency_manager
         return $text;
     }
 
-    public function local_file_name($group, $name, $version, $type, $url)
+    public function local_file_name($group, $name, $version, $type, $url = '', $alt = '')
     {
-        self::debug("local_file_name(), workingDir = $this->workingDir");
+        self::debug("local_file_name(), workingDir", $this->workingDir);
+        $dir = isset($this->workingDir[$alt]) ? $this->workingDir[$alt] : $this->workingDir[''];
         if ($url != null && $url != "") {
-            $result = $this->workingDir . basename($url);
+            $result = $dir . DIRECTORY_SEPARATOR . basename($url);
         } else {
             $result = $this->slugify($group) . "-" . $this->slugify($name) . '-' . $this->slugify($version) . "." . $type;
             while (strpos($result, "--") !== false) $result = str_replace("--", "-", $result);
 
-            $result = $this->workingDir . $result;
-            $result = str_replace('/', '\\', $result);
+            $result = $dir . DIRECTORY_SEPARATOR . $result;
+            if ('/' != DIRECTORY_SEPARATOR)
+                $result = str_replace('/', DIRECTORY_SEPARATOR, $result);
 
             self::debug("local_file_name(): $result");
         }
@@ -350,7 +371,7 @@ class dependency_manager
 
     public function scan_phar_file($phar_file, $name)
     {
-        self::debug("Scanning Phar File: $phar_file");
+        self::debug("Scanning PHAR File: $phar_file");
         $phar = new Phar($phar_file, FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::KEY_AS_FILENAME, $name);
         self::trace("Requiring PHAR: $phar_file");
         @require_once($phar_file);
@@ -371,7 +392,7 @@ class dependency_manager
     public function unzip_file($filename)
     {
     $filename=realpath($filename);
-    $dir = $this->workingDir . pathinfo($filename, PATHINFO_FILENAME);
+    $dir = dirname($filename) . DIRECTORY_SEPARATOR . pathinfo($filename, PATHINFO_FILENAME);
 
     $zip = new ZipArchive;
     $res = $zip->open($filename);

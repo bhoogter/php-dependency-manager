@@ -3,9 +3,9 @@
 <modules>
     <module>
         <dependencies>
-            <dependency name="xml-file" group="bhoogter" version="0.2.79" />
-            <dependency name="jquery" type="js" url="https://code.jquery.com/jquery-3.5.1.min.js" />
-            <dependency name="jquery-ui" type="zip" url="https://jqueryui.com/resources/download/jquery-ui-1.12.1.zip" />
+            <dependency name="xml-file" group="bhoogter" version="0.2.79" alt='external' />
+            <dependency name="jquery" type="js" url="https://code.jquery.com/jquery-3.5.1.min.js" alt='external' />
+            <dependency name="jquery-ui" type="zip" url="https://jqueryui.com/resources/download/jquery-ui-1.12.1.zip" alt='external' />
         </dependencies>
     </module>
 </modules>

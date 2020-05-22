@@ -22,7 +22,7 @@ final class test_phar_test extends TestCase
     {
         // dependency_manager::$log_dump = true;
         // $this->clearObjects();
-        print_r(dependency_manager()->packages);
+        // print_r(dependency_manager()->packages);
     }
 
     public function testLoadDependencyManager(): void

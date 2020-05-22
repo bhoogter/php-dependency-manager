@@ -7,7 +7,10 @@ final class types_test extends TestCase
     public static function setUpBeforeClass(): void
     {
         // dependency_manager::$log_dump = true;
-        dependency_manager(__DIR__ . "/resources/dependencies-types.xml", __DIR__ . "/resources/phars");
+        dependency_manager(
+            __DIR__ . "/resources/dependencies-types.xml", 
+            [ '' => __DIR__ . "/resources/phars", 'external' => __DIR__ . "/resources/ext" ]
+        );
     }
 
     public function testSetupCorrect(): void
