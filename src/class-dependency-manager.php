@@ -292,6 +292,7 @@ class dependency_manager
             if ($url == null) $url = "https://github.com/$grp/$nam/releases/download/$ver/$nam.$typ";
             self::debug("source::get_git: url=$url");
             $this->fetch_dependency($url, $resourceFile);
+            $this->process_download($resourceFile, $typ);
         }
         return $resourceFile;
     }
@@ -357,15 +358,19 @@ class dependency_manager
         return file_exists($local_file);
     }
 
+    public function process_download($resourceFile, $type, $name) {
+        self::log("Processing dependency: $name");
+        switch($type)
+        {
+            case "zip": $this->unzip_file($resourceFile); break;
+        }
+    }
+
     public function process_dependency($resourceFile, $type, $name) {
         self::log("Processing dependency: $name");
         switch($type)
         {
-            case "phar":
-                $this->scan_phar_file($resourceFile, $name);
-                break;
-            case "zip":
-                $this->unzip_file($resourceFile);
+            case "phar": $this->scan_phar_file($resourceFile, $name); break;
         }
     }
 
