@@ -292,7 +292,7 @@ class dependency_manager
             if ($url == null) $url = "https://github.com/$grp/$nam/releases/download/$ver/$nam.$typ";
             self::debug("source::get_git: url=$url");
             $this->fetch_dependency($url, $resourceFile);
-            $this->process_download($resourceFile, $typ);
+            $this->process_download($resourceFile, $typ, $nam);
         }
         return $resourceFile;
     }
