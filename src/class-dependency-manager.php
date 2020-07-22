@@ -23,7 +23,7 @@ class dependency_manager
     }
     private static function has_logger() {
         static $logger;
-        if (!isset($logger)) $logger = class_exists("php_logger");
+        if (!isset($logger)) $logger = class_exists("php_logger", false);
         return $logger;
     }
     static function trace(...$msgs) { return self::has_logger() ? php_logger::trace(...$msgs) : self::dump_log("TRACE", ...$msgs); }
