@@ -34,7 +34,6 @@ jobs:
           prerelease: false
           tag_name: ${{ steps.version.outputs.version }}
           release_name: ${{ steps.version.outputs.version }}
-          asset_name: xml-file.phar
       - name: Upload Asset
         if: ${{ steps.version.outputs.deploy == '' }}
         id: upload_asset
@@ -43,7 +42,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./xml-file.phar
-          asset_name: xml-file.phar
+          asset_path: ./php-dependency-manager.phar
+          asset_name: php-dependency-manager.phar
           asset_content_type: application/x-httpd-php
       - run: echo "🍏 This job's status is ${{ job.status }}."

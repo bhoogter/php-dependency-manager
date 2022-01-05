@@ -1,11 +1,17 @@
-#!/bin/bash
+REM ECHO OFF
 
 IF [%1] == [] GOTO NOARG
-SET ARGS=%1
-GOTO DONEARGS
+:ARG
+php ..\phpunit-9.5.phar --bootstrap ".\src\stub.php" %1
+GOTO DONE
+
 :NOARG
-SET ARGS=*.*
-:DONEARGS
+for %%f in (tests/*.php) do (
+    echo %%~nf
+    php ..\phpunit-9.5.phar --bootstrap ".\src\stub.php" "tests/%%~nf.php"
+)
+GOTO DONE
 
-php ..\phpunit-6.5.14.phar tests\%ARGS
+:DONE
 
+ECHO "Complete."
