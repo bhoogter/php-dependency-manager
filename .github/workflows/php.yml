@@ -1,0 +1,49 @@
+name: Release Code
+on: [push]
+jobs:
+  Test-And-Release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Move to directory
+        run: cd ${{ github.workspace }}
+      - name: Get Version
+        id: version
+        run: |
+            echo "::set-output name=version::$(cat VERSION)"
+            echo "::set-output name=deploy::$(cat VERSION | grep 'dev' || true)"
+      - name: Check Version
+        run: |
+            echo "VERSION: ${{ steps.version.outputs.version }}"
+            echo "DePLOY: ${{ steps.version.outputs.deploy }}"
+      - name: Run Packager
+        if: ${{ steps.version.outputs.deploy == '' }}
+        run: |
+            echo "VERSION: ${{ steps.version.outputs.version }}"
+            echo "DePLOY: ${{ steps.version.outputs.deploy }}"
+            php --define phar.readonly=0 buildPhar.php
+      - name: Create Release
+        if: ${{ steps.version.outputs.deploy == '' }}
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          draft: false
+          prerelease: false
+          tag_name: ${{ steps.version.outputs.version }}
+          release_name: ${{ steps.version.outputs.version }}
+          asset_name: xml-file.phar
+      - name: Upload Asset
+        if: ${{ steps.version.outputs.deploy == '' }}
+        id: upload_asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./xml-file.phar
+          asset_name: xml-file.phar
+          asset_content_type: application/x-httpd-php
+      - run: echo "🍏 This job's status is ${{ job.status }}."

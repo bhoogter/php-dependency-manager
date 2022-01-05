@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 
-final class old_version_phars extends TestCase
+final class old_versions_test extends TestCase
 {
     public static function setUpBeforeClass(): void
     {

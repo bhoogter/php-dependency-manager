@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 
-final class test_phar_test extends TestCase
+final class phar_test extends TestCase
 {
     public static function setUpBeforeClass(): void
     {
