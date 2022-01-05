@@ -5,4 +5,4 @@ installation, only configuration.
 
 # License
 
-GPLv3
+BSD 2 Clause
